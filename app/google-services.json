@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1090392366784",
+    "project_id": "marketplaceamoled",
+    "storage_bucket": "marketplaceamoled.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1090392366784:android:52eccb1def3fe788d6d725",
+        "android_client_info": {
+          "package_name": "com.example.marketplace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwE0RsXWNyC9CugSnRPfKrt2Xix6Bm-9c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
