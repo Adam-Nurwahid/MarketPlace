@@ -7,7 +7,7 @@ class IntroActivity : BaseActivity() {
     private lateinit var binding: ActivityIntroBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityIntroBinding.inflate(layoutinflater)
+        binding = ActivityIntroBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.start8tn.setOnClikListener {
