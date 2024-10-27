@@ -29,10 +29,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun initBanner() {
         binding.progressBarBanner.visibility= View.VISIBLE
-            viewModel.Banners.observe( this, Observer { item ->
+            viewModel.Banners.observe( this, Observer { items ->
+                banners(items)
+                binding.progressBarBanner.visibility=View.GONE
+
 
 
             })
+            viewModel.loadBanners()
     }
 
     private fun banners(images:List<SliderModel>){
@@ -47,5 +51,6 @@ class MainActivity : AppCompatActivity() {
         }
         binding.viewpagerSlider.setPageTransformer(compositePageTransformer)
         if(image.size>1)
-            binding.
+            binding.dotIndicator.visibility = View.VISIBLE
+            binding.dotIndicator.attachTo(binding.viewpagerSlider)
 }
