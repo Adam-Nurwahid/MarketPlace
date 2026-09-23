@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/admin_product_service.dart';
-import '../../core/widgets/role_guard.dart';
-
 
 class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key});
 
   @override
-  State<AdminProductsPage> createState() => _AdminProductsPageState();
+  State<AdminProductsPage> createState() => AdminProductsPageState();
 }
 
-class _AdminProductsPageState extends State<AdminProductsPage> {
+class AdminProductsPageState extends State<AdminProductsPage> {
   final AdminProductService _service = AdminProductService();
 
   List<Map<String, dynamic>> _products = [];
@@ -22,10 +20,16 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
     _loadProducts();
   }
 
-  Future<void> _loadProducts() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void refreshProducts() {
+    _loadProducts(showLoading: false);
+  }
+
+  Future<void> _loadProducts({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final products = await _service.getAllProducts();
@@ -58,27 +62,28 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
-      requiredRole: 'ADMIN',
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Manajemen Produk'),
-          actions: [
-            IconButton(
-              onPressed: _loadProducts,
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(
-          child: CircularProgressIndicator(),
-        )
-            : _products.isEmpty
-            ? const Center(
-          child: Text('Belum ada produk'),
-        )
-            : ListView.builder(
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Manajemen Produk'),
+        actions: [
+          IconButton(
+            onPressed: _loadProducts,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : _products.isEmpty
+          ? const Center(
+        child: Text('Belum ada produk'),
+      )
+          : RefreshIndicator(
+        onRefresh: _loadProducts,
+        child: ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: _products.length,
           itemBuilder: (context, index) {

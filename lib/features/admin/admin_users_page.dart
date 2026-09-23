@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/admin_user_service.dart';
-import '../../core/widgets/role_guard.dart';
-
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
 
   @override
-  State<AdminUsersPage> createState() => _AdminUsersPageState();
+  State<AdminUsersPage> createState() => AdminUsersPageState();
 }
 
-class _AdminUsersPageState extends State<AdminUsersPage> {
+class AdminUsersPageState extends State<AdminUsersPage> {
   final AdminUserService _service = AdminUserService();
 
   List<Map<String, dynamic>> _users = [];
@@ -22,10 +20,16 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     _loadUsers();
   }
 
-  Future<void> _loadUsers() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void refreshUsers() {
+    _loadUsers(showLoading: false);
+  }
+
+  Future<void> _loadUsers({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final users = await _service.getAllUsers();
@@ -53,27 +57,29 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
-      requiredRole: 'ADMIN',
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Manajemen Pengguna'),
-          actions: [
-            IconButton(
-              onPressed: _loadUsers,
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(
-          child: CircularProgressIndicator(),
-        )
-            : _users.isEmpty
-            ? const Center(
-          child: Text('Belum ada pengguna'),
-        )
-            : ListView.builder(
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Manajemen Pengguna'),
+        actions: [
+          IconButton(
+            onPressed: _loadUsers,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : _users.isEmpty
+          ? const Center(
+        child: Text('Belum ada pengguna'),
+      )
+          : RefreshIndicator(
+        onRefresh: _loadUsers,
+        child: ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: _users.length,
           itemBuilder: (context, index) {

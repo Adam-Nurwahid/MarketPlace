@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/admin_order_service.dart';
-import '../../core/widgets/role_guard.dart';
-
 
 class AdminOrdersPage extends StatefulWidget {
   const AdminOrdersPage({super.key});
 
   @override
-  State<AdminOrdersPage> createState() => _AdminOrdersPageState();
+  State<AdminOrdersPage> createState() => AdminOrdersPageState();
 }
 
-class _AdminOrdersPageState extends State<AdminOrdersPage> {
+class AdminOrdersPageState extends State<AdminOrdersPage> {
   final AdminOrderService _service = AdminOrderService();
 
   List<Map<String, dynamic>> _orders = [];
@@ -22,10 +20,16 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
     _loadOrders();
   }
 
-  Future<void> _loadOrders() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void refreshOrders() {
+    _loadOrders(showLoading: false);
+  }
+
+  Future<void> _loadOrders({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final orders = await _service.getAllOrders();
@@ -74,27 +78,28 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
-      requiredRole: 'ADMIN',
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Seluruh Transaksi'),
-          actions: [
-            IconButton(
-              onPressed: _loadOrders,
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(
-          child: CircularProgressIndicator(),
-        )
-            : _orders.isEmpty
-            ? const Center(
-          child: Text('Belum ada transaksi'),
-        )
-            : ListView.builder(
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Seluruh Transaksi'),
+        actions: [
+          IconButton(
+            onPressed: _loadOrders,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : _orders.isEmpty
+          ? const Center(
+        child: Text('Belum ada transaksi'),
+      )
+          : RefreshIndicator(
+        onRefresh: _loadOrders,
+        child: ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: _orders.length,
           itemBuilder: (context, index) {
@@ -113,7 +118,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
               margin: const EdgeInsets.only(bottom: 16),
               child: ExpansionTile(
                 title: Text(
-                  'Order #${orderId.toString().substring(0, 8)}',
+                  'Order #${orderId.toString().length >= 8 ? orderId.toString().substring(0, 8) : orderId}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                   ),

@@ -2,31 +2,34 @@ import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/role_guard.dart';
-import 'seller_dashboard_page.dart';
-import 'seller_products_page.dart';
-import 'seller_orders_page.dart';
+import 'admin_store_management_page.dart';
+import 'admin_users_and_sellers_view.dart';
+import 'admin_products_page.dart';
+import 'admin_orders_page.dart';
 
-class SellerMainShell extends StatefulWidget {
+class AdminMainShell extends StatefulWidget {
   final int initialIndex;
 
-  const SellerMainShell({
+  const AdminMainShell({
     super.key,
     this.initialIndex = 0,
   });
 
   @override
-  State<SellerMainShell> createState() => _SellerMainShellState();
+  State<AdminMainShell> createState() => _AdminMainShellState();
 }
 
-class _SellerMainShellState extends State<SellerMainShell> {
+class _AdminMainShellState extends State<AdminMainShell> {
   late int _selectedIndex;
 
-  final GlobalKey<SellerDashboardPageState> _storeKey =
-  GlobalKey<SellerDashboardPageState>();
-  final GlobalKey<SellerProductsPageState> _productsKey =
-  GlobalKey<SellerProductsPageState>();
-  final GlobalKey<SellerOrdersPageState> _ordersKey =
-  GlobalKey<SellerOrdersPageState>();
+  final GlobalKey<AdminStoreManagementPageState> _storesKey =
+  GlobalKey<AdminStoreManagementPageState>();
+  final GlobalKey<AdminUsersAndSellersViewState> _usersAndSellersKey =
+  GlobalKey<AdminUsersAndSellersViewState>();
+  final GlobalKey<AdminProductsPageState> _productsKey =
+  GlobalKey<AdminProductsPageState>();
+  final GlobalKey<AdminOrdersPageState> _ordersKey =
+  GlobalKey<AdminOrdersPageState>();
 
   late final List<Widget> _pages;
 
@@ -35,9 +38,10 @@ class _SellerMainShellState extends State<SellerMainShell> {
     super.initState();
     _selectedIndex = widget.initialIndex;
     _pages = [
-      SellerDashboardPage(key: _storeKey),
-      SellerProductsPage(key: _productsKey),
-      SellerOrdersPage(key: _ordersKey),
+      AdminStoreManagementPage(key: _storesKey),
+      AdminUsersAndSellersView(key: _usersAndSellersKey),
+      AdminProductsPage(key: _productsKey),
+      AdminOrdersPage(key: _ordersKey),
     ];
   }
 
@@ -47,10 +51,12 @@ class _SellerMainShellState extends State<SellerMainShell> {
     });
 
     if (index == 0) {
-      _storeKey.currentState?.refreshStore();
+      _storesKey.currentState?.refreshStores();
     } else if (index == 1) {
-      _productsKey.currentState?.refreshProducts();
+      _usersAndSellersKey.currentState?.refreshAll();
     } else if (index == 2) {
+      _productsKey.currentState?.refreshProducts();
+    } else if (index == 3) {
       _ordersKey.currentState?.refreshOrders();
     }
   }
@@ -69,7 +75,7 @@ class _SellerMainShellState extends State<SellerMainShell> {
   @override
   Widget build(BuildContext context) {
     return RoleGuard(
-      requiredRole: 'SELLER',
+      requiredRole: 'ADMIN',
       child: LayoutBuilder(
         builder: (context, constraints) {
           final bool isWebWide = constraints.maxWidth >= 768;
@@ -86,22 +92,21 @@ class _SellerMainShellState extends State<SellerMainShell> {
 
   Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: _pages,
-        ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
 
-        floatingActionButton: FloatingActionButton(
-          onPressed: _logout,
-          backgroundColor: AppColors.danger,
-          tooltip: 'Keluar',
-          child: const Icon(
-            Icons.logout,
-            color: Colors.white,
-          ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _logout,
+        backgroundColor: AppColors.danger,
+        tooltip: 'Keluar',
+        child: const Icon(
+          Icons.logout,
+          color: Colors.white,
         ),
-
-        bottomNavigationBar: Container(
+      ),
+      bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(
             top: BorderSide(color: AppColors.border, width: 1),
@@ -114,13 +119,17 @@ class _SellerMainShellState extends State<SellerMainShell> {
           backgroundColor: AppColors.surface,
           selectedItemColor: AppColors.navActive,
           unselectedItemColor: AppColors.navInactive,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.storefront_outlined),
-              activeIcon: Icon(Icons.storefront),
-              label: 'Toko Saya',
+              icon: Icon(Icons.store),
+              label: 'Persetujuan Toko',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people_outline),
+              activeIcon: Icon(Icons.people),
+              label: 'Pengguna',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory_2_outlined),
@@ -128,9 +137,9 @@ class _SellerMainShellState extends State<SellerMainShell> {
               label: 'Produk',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_outlined),
-              activeIcon: Icon(Icons.assignment),
-              label: 'Pesanan',
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
+              label: 'Transaksi',
             ),
           ],
         ),
@@ -142,7 +151,7 @@ class _SellerMainShellState extends State<SellerMainShell> {
     return Scaffold(
       body: Column(
         children: [
-          // Top Web Seller Center Header
+          // Top Web Admin Panel Header
           Container(
             height: 64,
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -154,24 +163,24 @@ class _SellerMainShellState extends State<SellerMainShell> {
             ),
             child: Row(
               children: [
-                // Seller Brand Logo
+                // Admin Brand Logo
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.secondary,
+                        color: AppColors.textPrimary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
-                        Icons.store,
+                        Icons.admin_panel_settings,
                         color: Colors.white,
                         size: 20,
                       ),
                     ),
                     const SizedBox(width: 12),
                     const Text(
-                      'NACC Seller Center',
+                      'NACC Admin Panel',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -184,11 +193,13 @@ class _SellerMainShellState extends State<SellerMainShell> {
                 // Navigation Tabs
                 Row(
                   children: [
-                    _buildWebNavItem(0, Icons.storefront, 'Toko Saya'),
+                    _buildWebNavItem(0, Icons.store, 'Dashboard & Toko'),
                     const SizedBox(width: 8),
-                    _buildWebNavItem(1, Icons.inventory_2, 'Produk'),
+                    _buildWebNavItem(1, Icons.people, 'Pengguna & Seller'),
                     const SizedBox(width: 8),
-                    _buildWebNavItem(2, Icons.assignment, 'Pesanan'),
+                    _buildWebNavItem(2, Icons.inventory_2, 'Produk'),
+                    const SizedBox(width: 8),
+                    _buildWebNavItem(3, Icons.receipt_long, 'Transaksi'),
                   ],
                 ),
                 const SizedBox(width: 24),

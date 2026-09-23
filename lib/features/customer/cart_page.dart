@@ -124,6 +124,7 @@ class CartPageState extends State<CartPage> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Keranjang Belanja'),
       ),
       body: isLoading

@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/admin_seller_service.dart';
-import '../../core/widgets/role_guard.dart';
 
 class AdminSellersPage extends StatefulWidget {
   const AdminSellersPage({super.key});
 
   @override
-  State<AdminSellersPage> createState() => _AdminSellersPageState();
+  State<AdminSellersPage> createState() => AdminSellersPageState();
 }
 
-class _AdminSellersPageState extends State<AdminSellersPage> {
+class AdminSellersPageState extends State<AdminSellersPage> {
   final AdminSellerService _service = AdminSellerService();
 
   List<Map<String, dynamic>> _sellers = [];
@@ -21,10 +20,16 @@ class _AdminSellersPageState extends State<AdminSellersPage> {
     _loadSellers();
   }
 
-  Future<void> _loadSellers() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void refreshSellers() {
+    _loadSellers(showLoading: false);
+  }
+
+  Future<void> _loadSellers({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final sellers = await _service.getAllSellers();
@@ -103,7 +108,7 @@ class _AdminSellersPageState extends State<AdminSellersPage> {
         ),
       );
 
-      await _loadSellers();
+      await _loadSellers(showLoading: false);
     } catch (e) {
       if (!mounted) return;
 
@@ -117,27 +122,28 @@ class _AdminSellersPageState extends State<AdminSellersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
-      requiredRole: 'ADMIN',
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Manajemen Seller'),
-          actions: [
-            IconButton(
-              onPressed: _loadSellers,
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(
-          child: CircularProgressIndicator(),
-        )
-            : _sellers.isEmpty
-            ? const Center(
-          child: Text('Belum ada seller'),
-        )
-            : ListView.builder(
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Manajemen Seller'),
+        actions: [
+          IconButton(
+            onPressed: _loadSellers,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : _sellers.isEmpty
+          ? const Center(
+        child: Text('Belum ada seller'),
+      )
+          : RefreshIndicator(
+        onRefresh: _loadSellers,
+        child: ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: _sellers.length,
           itemBuilder: (context, index) {

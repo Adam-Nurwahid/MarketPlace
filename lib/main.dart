@@ -10,7 +10,7 @@ Future<void> main() async {
 
   await Supabase.initialize(
     url: '',
-    anonKey:'');
+    anonKey: '' );
 
   runApp(const MyApp());
 }
@@ -24,52 +24,7 @@ class MyApp extends StatelessWidget {
       title: 'NACC Marketplace',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const HomePage(),
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('NACC Marketplace'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const LoginPage(),
-                  ),
-                );
-              },
-              child: const Text('Login'),
-            ),
-
-            const SizedBox(height: 16),
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const RegisterPage(),
-                  ),
-                );
-              },
-              child: const Text('Register'),
-            ),
-          ],
-        ),
-      ),
+      home: const LoginPage(),
     );
   }
 }

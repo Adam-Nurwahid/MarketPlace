@@ -10,6 +10,7 @@ class CustomerDashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Akun Saya'),
         actions: [
           IconButton(
@@ -86,24 +87,6 @@ class CustomerDashboardPage extends StatelessWidget {
             Card(
               child: Column(
                 children: [
-                  ListTile(
-                    leading: const Icon(Icons.storefront, color: AppColors.primary),
-                    title: const Text(
-                      'Test Akses Seller',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: const Text('Buka dasbor toko atau daftarkan toko baru'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SellerMainShell(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1, color: AppColors.border),
                   ListTile(
                     leading: const Icon(Icons.logout, color: AppColors.danger),
                     title: const Text(

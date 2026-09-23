@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-
 import '../../core/services/admin_store_service.dart';
-import '../../core/widgets/role_guard.dart';
 
 class AdminStoreManagementPage extends StatefulWidget {
   const AdminStoreManagementPage({super.key});
 
   @override
   State<AdminStoreManagementPage> createState() =>
-      _AdminStoreManagementPageState();
+      AdminStoreManagementPageState();
 }
 
-class _AdminStoreManagementPageState
+class AdminStoreManagementPageState
     extends State<AdminStoreManagementPage> {
   final AdminStoreService _storeService = AdminStoreService();
 
@@ -26,11 +24,17 @@ class _AdminStoreManagementPageState
     _loadStores();
   }
 
-  Future<void> _loadStores() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+  void refreshStores() {
+    _loadStores(showLoading: false);
+  }
+
+  Future<void> _loadStores({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final stores = await _storeService.getPendingStores();
@@ -61,7 +65,7 @@ class _AdminStoreManagementPageState
         status: status,
       );
 
-      await _loadStores();
+      await _loadStores(showLoading: false);
 
       if (!mounted) return;
 
@@ -83,14 +87,18 @@ class _AdminStoreManagementPageState
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
-      requiredRole: 'ADMIN',
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Persetujuan Toko'),
-        ),
-        body: _buildBody(),
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Persetujuan Toko'),
+        actions: [
+          IconButton(
+            onPressed: _loadStores,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
+      body: _buildBody(),
     );
   }
 
@@ -119,83 +127,86 @@ class _AdminStoreManagementPageState
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _stores.length,
-      itemBuilder: (context, index) {
-        final store = _stores[index];
+    return RefreshIndicator(
+      onRefresh: _loadStores,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _stores.length,
+        itemBuilder: (context, index) {
+          final store = _stores[index];
 
-        final storeId = store['id'].toString();
-        final storeName = store['name'] ?? '-';
-        final description = store['description'] ?? '-';
+          final storeId = store['id'].toString();
+          final storeName = store['name'] ?? '-';
+          final description = store['description'] ?? '-';
 
-        final profile = store['profiles'];
+          final profile = store['profiles'];
 
-        final sellerName = profile is Map
-            ? profile['name'] ?? '-'
-            : '-';
+          final sellerName = profile is Map
+              ? profile['name'] ?? '-'
+              : '-';
 
-        final sellerEmail = profile is Map
-            ? profile['email'] ?? '-'
-            : '-';
+          final sellerEmail = profile is Map
+              ? profile['email'] ?? '-'
+              : '-';
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  storeName.toString(),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    storeName.toString(),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                Text('Deskripsi: $description'),
-                Text('Seller: $sellerName'),
-                Text('Email: $sellerEmail'),
+                  Text('Deskripsi: $description'),
+                  Text('Seller: $sellerName'),
+                  Text('Email: $sellerEmail'),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          _updateStatus(
-                            storeId: storeId,
-                            status: 'APPROVED',
-                          );
-                        },
-                        child: const Text('Approve'),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _updateStatus(
+                              storeId: storeId,
+                              status: 'APPROVED',
+                            );
+                          },
+                          child: const Text('Approve'),
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(width: 12),
+                      const SizedBox(width: 12),
 
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          _updateStatus(
-                            storeId: storeId,
-                            status: 'REJECTED',
-                          );
-                        },
-                        child: const Text('Reject'),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            _updateStatus(
+                              storeId: storeId,
+                              status: 'REJECTED',
+                            );
+                          },
+                          child: const Text('Reject'),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

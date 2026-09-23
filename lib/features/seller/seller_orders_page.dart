@@ -153,6 +153,7 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Pesanan Masuk'),
         actions: [
           IconButton(

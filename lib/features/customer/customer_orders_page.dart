@@ -244,6 +244,7 @@ class CustomerOrdersPageState extends State<CustomerOrdersPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Riwayat Pesanan'),
         actions: [
           IconButton(
@@ -431,7 +432,7 @@ class CustomerOrdersPageState extends State<CustomerOrdersPage> {
                     const SizedBox(height: 12),
 
                     // Hanya pesanan PENDING yang bisa dibatalkan
-                    if (status == 'PENDING')
+                    if (status == 'PENDING' || status == 'PROCESSING')
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton(

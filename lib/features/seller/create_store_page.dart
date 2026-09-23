@@ -81,6 +81,7 @@ class _CreateStorePageState extends State<CreateStorePage> {
       requiredRole: 'SELLER',
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text('Buat Toko'),
         ),
         body: Padding(

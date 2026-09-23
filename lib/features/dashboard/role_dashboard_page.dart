@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/profile_service.dart';
 import '../customer/customer_main_shell.dart';
 import '../seller/seller_main_shell.dart';
-import '../admin/admin_dashboard_page.dart';
+import '../admin/admin_main_shell.dart';
 
 class RoleDashboardPage extends StatefulWidget {
   const RoleDashboardPage({super.key});
@@ -53,7 +53,7 @@ class _RoleDashboardPageState
           break;
 
         case 'ADMIN':
-          dashboard = const AdminDashboardPage();
+          dashboard = const AdminMainShell();
           break;
 
         default:

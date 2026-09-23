@@ -71,6 +71,7 @@ class SellerDashboardPageState extends State<SellerDashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Ringkasan Toko'),
         actions: [
           IconButton(
@@ -164,30 +165,6 @@ class SellerDashboardPageState extends State<SellerDashboardPage> {
               'Toko ditolak oleh Admin.',
             ),
           if (status == 'APPROVED') ...[
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const SellerProductsPage(),
-                  ),
-                );
-              },
-              child: const Text('Kelola Produk'),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SellerOrdersPage(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.shopping_bag),
-              label: const Text('Kelola Pesanan'),
-            ),
           ],
         ],
       ),
