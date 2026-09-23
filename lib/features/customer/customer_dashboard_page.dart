@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:marketplace/features/customer/customer_orders_page.dart';
 import 'package:marketplace/features/customer/order_history_page.dart';
 import '../../core/services/auth_service.dart';
+import '../seller/seller_dashboard_page.dart';
 import 'marketplace_page.dart';
 import 'cart_page.dart';
 
@@ -43,6 +44,7 @@ class CustomerDashboardPage extends StatelessWidget {
               },
               child: const Text('Buka Marketplace'),
             ),
+            const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -55,6 +57,7 @@ class CustomerDashboardPage extends StatelessWidget {
               icon: const Icon(Icons.shopping_cart),
               label: const Text('Keranjang Belanja'),
             ),
+            const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -67,6 +70,7 @@ class CustomerDashboardPage extends StatelessWidget {
               icon: const Icon(Icons.receipt_long),
               label: const Text('Pesanan Saya'),
             ),
+            const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -79,6 +83,17 @@ class CustomerDashboardPage extends StatelessWidget {
               icon: const Icon(Icons.receipt_long),
               label: const Text('Riwayat Pesanan'),
             ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SellerDashboardPage(),
+                  ),
+                );
+              },
+              child: const Text('Test Akses Seller'),
+            )
           ],
         )
       ),

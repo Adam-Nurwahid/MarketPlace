@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/admin_store_service.dart';
+import '../../core/widgets/role_guard.dart';
 
 class AdminStoreManagementPage extends StatefulWidget {
   const AdminStoreManagementPage({super.key});
@@ -82,11 +83,14 @@ class _AdminStoreManagementPageState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Persetujuan Toko'),
+    return RoleGuard(
+      requiredRole: 'ADMIN',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Persetujuan Toko'),
+        ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 

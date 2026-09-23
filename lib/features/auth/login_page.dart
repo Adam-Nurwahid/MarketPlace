@@ -39,23 +39,21 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      _showMessage('Login berhasil');
-
-      // Sementara kembali ke halaman sebelumnya.
-      // Nanti diganti dengan navigasi berdasarkan role.
-      Navigator.pop(context);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const RoleDashboardPage(),
+        ),
+      );
     } on AuthException catch (e) {
       _showMessage(e.message);
     } catch (e) {
       _showMessage('Terjadi kesalahan');
     } finally {
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const RoleDashboardPage(),
-          ),
-        );
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

@@ -3,6 +3,7 @@ import 'package:marketplace/features/seller/seller_orders_page.dart';
 
 import '../../core/services/auth_service.dart';
 import '../../core/services/store_service.dart';
+import '../../core/widgets/role_guard.dart';
 import 'create_store_page.dart';
 import 'seller_products_page.dart';
 
@@ -62,17 +63,20 @@ class _SellerDashboardPageState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Seller Dashboard'),
-        actions: [
-          IconButton(
-            onPressed: _logout,
-            icon: const Icon(Icons.logout),
-          ),
-        ],
+    return RoleGuard(
+      requiredRole: 'SELLER',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Seller Dashboard'),
+          actions: [
+            IconButton(
+              onPressed: _logout,
+              icon: const Icon(Icons.logout),
+            ),
+          ],
+        ),
+        body: _buildBody(),
       ),
-      body: _buildBody(),
     );
   }
 

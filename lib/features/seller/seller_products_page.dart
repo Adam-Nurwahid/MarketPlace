@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/seller_product_service.dart';
 import '../../core/services/store_service.dart';
+import '../../core/widgets/role_guard.dart';
 
 class SellerProductsPage extends StatefulWidget {
   const SellerProductsPage({super.key});
@@ -308,21 +309,24 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kelola Produk'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadOrders,
-          ),
-        ],
+    return RoleGuard(
+      requiredRole: 'SELLER',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Kelola Produk'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadOrders,
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _showAddProductDialog,
+          child: const Icon(Icons.add),
+        ),
+        body: _buildBody(),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddProductDialog,
-        child: const Icon(Icons.add),
-      ),
-      body: _buildBody(),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/admin_seller_service.dart';
+import '../../core/widgets/role_guard.dart';
 
 class AdminSellersPage extends StatefulWidget {
   const AdminSellersPage({super.key});
@@ -116,70 +117,73 @@ class _AdminSellersPageState extends State<AdminSellersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manajemen Seller'),
-        actions: [
-          IconButton(
-            onPressed: _loadSellers,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(
-        child: CircularProgressIndicator(),
-      )
-          : _sellers.isEmpty
-          ? const Center(
-        child: Text('Belum ada seller'),
-      )
-          : ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _sellers.length,
-        itemBuilder: (context, index) {
-          final seller = _sellers[index];
-
-          final isSuspended =
-              seller['is_suspended'] == true;
-
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: CircleAvatar(
-                child: Icon(
-                  isSuspended
-                      ? Icons.block
-                      : Icons.store,
-                ),
-              ),
-              title: Text(
-                seller['email'] ?? '-',
-              ),
-              subtitle: Text(
-                isSuspended
-                    ? 'Status: SUSPENDED'
-                    : 'Status: ACTIVE',
-              ),
-              trailing: ElevatedButton(
-                onPressed: () {
-                  _toggleSuspension(seller);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isSuspended
-                      ? Colors.green
-                      : Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-                child: Text(
-                  isSuspended
-                      ? 'Aktifkan'
-                      : 'Suspend',
-                ),
-              ),
+    return RoleGuard(
+      requiredRole: 'ADMIN',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Manajemen Seller'),
+          actions: [
+            IconButton(
+              onPressed: _loadSellers,
+              icon: const Icon(Icons.refresh),
             ),
-          );
-        },
+          ],
+        ),
+        body: _isLoading
+            ? const Center(
+          child: CircularProgressIndicator(),
+        )
+            : _sellers.isEmpty
+            ? const Center(
+          child: Text('Belum ada seller'),
+        )
+            : ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _sellers.length,
+          itemBuilder: (context, index) {
+            final seller = _sellers[index];
+
+            final isSuspended =
+                seller['is_suspended'] == true;
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: CircleAvatar(
+                  child: Icon(
+                    isSuspended
+                        ? Icons.block
+                        : Icons.store,
+                  ),
+                ),
+                title: Text(
+                  seller['email'] ?? '-',
+                ),
+                subtitle: Text(
+                  isSuspended
+                      ? 'Status: SUSPENDED'
+                      : 'Status: ACTIVE',
+                ),
+                trailing: ElevatedButton(
+                  onPressed: () {
+                    _toggleSuspension(seller);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isSuspended
+                        ? Colors.green
+                        : Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(
+                    isSuspended
+                        ? 'Aktifkan'
+                        : 'Suspend',
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

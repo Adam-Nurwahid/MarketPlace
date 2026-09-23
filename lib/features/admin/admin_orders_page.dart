@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/admin_order_service.dart';
+import '../../core/widgets/role_guard.dart';
 
 
 class AdminOrdersPage extends StatefulWidget {
@@ -73,119 +74,122 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Seluruh Transaksi'),
-        actions: [
-          IconButton(
-            onPressed: _loadOrders,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(
-        child: CircularProgressIndicator(),
-      )
-          : _orders.isEmpty
-          ? const Center(
-        child: Text('Belum ada transaksi'),
-      )
-          : ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _orders.length,
-        itemBuilder: (context, index) {
-          final order = _orders[index];
+    return RoleGuard(
+      requiredRole: 'ADMIN',
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Seluruh Transaksi'),
+          actions: [
+            IconButton(
+              onPressed: _loadOrders,
+              icon: const Icon(Icons.refresh),
+            ),
+          ],
+        ),
+        body: _isLoading
+            ? const Center(
+          child: CircularProgressIndicator(),
+        )
+            : _orders.isEmpty
+            ? const Center(
+          child: Text('Belum ada transaksi'),
+        )
+            : ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _orders.length,
+          itemBuilder: (context, index) {
+            final order = _orders[index];
 
-          final orderId = order['id'] ?? '-';
-          final userId = order['user_id'] ?? '-';
-          final status = order['status'] ?? '-';
-          final total = order['total'];
+            final orderId = order['id'] ?? '-';
+            final userId = order['user_id'] ?? '-';
+            final status = order['status'] ?? '-';
+            final total = order['total'];
 
-          final items = List<Map<String, dynamic>>.from(
-            order['order_items'] ?? [],
-          );
+            final items = List<Map<String, dynamic>>.from(
+              order['order_items'] ?? [],
+            );
 
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: ExpansionTile(
-              title: Text(
-                'Order #${orderId.toString().substring(0, 8)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
+            return Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: ExpansionTile(
+                title: Text(
+                  'Order #${orderId.toString().substring(0, 8)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 6),
+                    Text('Customer ID: $userId'),
+                    Text('Total: ${_formatPrice(total)}'),
+                    const SizedBox(height: 4),
+                    Text(
+                      status,
+                      style: TextStyle(
+                        color: _statusColor(status),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
                 children: [
-                  const SizedBox(height: 6),
-                  Text('Customer ID: $userId'),
-                  Text('Total: ${_formatPrice(total)}'),
-                  const SizedBox(height: 4),
-                  Text(
-                    status,
-                    style: TextStyle(
-                      color: _statusColor(status),
-                      fontWeight: FontWeight.bold,
+                  const Divider(),
+
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Penerima: ${order['recipient_name'] ?? '-'}',
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Alamat: ${order['shipping_address'] ?? '-'}',
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        const Text(
+                          'Produk:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        ...items.map((item) {
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              item['product_name'] ?? '-',
+                            ),
+                            subtitle: Text(
+                              '${item['store_name'] ?? '-'}\n'
+                                  'Jumlah: ${item['quantity'] ?? 0}',
+                            ),
+                            trailing: Text(
+                              _formatPrice(item['price']),
+                            ),
+                          );
+                        }),
+
+                        const Divider(),
+
+                        Text(
+                          'Tanggal: ${order['created_at'] ?? '-'}',
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              children: [
-                const Divider(),
-
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Penerima: ${order['recipient_name'] ?? '-'}',
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Alamat: ${order['shipping_address'] ?? '-'}',
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      const Text(
-                        'Produk:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      ...items.map((item) {
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(
-                            item['product_name'] ?? '-',
-                          ),
-                          subtitle: Text(
-                            '${item['store_name'] ?? '-'}\n'
-                                'Jumlah: ${item['quantity'] ?? 0}',
-                          ),
-                          trailing: Text(
-                            _formatPrice(item['price']),
-                          ),
-                        );
-                      }),
-
-                      const Divider(),
-
-                      Text(
-                        'Tanggal: ${order['created_at'] ?? '-'}',
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
