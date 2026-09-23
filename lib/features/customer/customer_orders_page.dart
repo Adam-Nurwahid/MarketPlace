@@ -6,10 +6,10 @@ class CustomerOrdersPage extends StatefulWidget {
   const CustomerOrdersPage({super.key});
 
   @override
-  State<CustomerOrdersPage> createState() => _CustomerOrdersPageState();
+  State<CustomerOrdersPage> createState() => CustomerOrdersPageState();
 }
 
-class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
+class CustomerOrdersPageState extends State<CustomerOrdersPage> {
   final OrderService _orderService = OrderService();
 
   List<Map<String, dynamic>> _orders = [];
@@ -21,10 +21,16 @@ class _CustomerOrdersPageState extends State<CustomerOrdersPage> {
     _loadOrders();
   }
 
-  Future<void> _loadOrders() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void refreshOrders() {
+    _loadOrders(showLoading: false);
+  }
+
+  Future<void> _loadOrders({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final orders = await _orderService.getMyOrders();

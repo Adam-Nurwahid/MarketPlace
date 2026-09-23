@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/profile_service.dart';
-import '../customer/customer_dashboard_page.dart';
-import '../seller/seller_dashboard_page.dart';
+import '../customer/customer_main_shell.dart';
+import '../seller/seller_main_shell.dart';
 import '../admin/admin_dashboard_page.dart';
 
 class RoleDashboardPage extends StatefulWidget {
@@ -45,11 +45,11 @@ class _RoleDashboardPageState
 
       switch (role) {
         case 'CUSTOMER':
-          dashboard = const CustomerDashboardPage();
+          dashboard = const CustomerMainShell();
           break;
 
         case 'SELLER':
-          dashboard = const SellerDashboardPage();
+          dashboard = const SellerMainShell();
           break;
 
         case 'ADMIN':

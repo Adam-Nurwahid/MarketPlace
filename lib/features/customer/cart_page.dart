@@ -7,10 +7,10 @@ class CartPage extends StatefulWidget {
   const CartPage({super.key});
 
   @override
-  State<CartPage> createState() => _CartPageState();
+  State<CartPage> createState() => CartPageState();
 }
 
-class _CartPageState extends State<CartPage> {
+class CartPageState extends State<CartPage> {
   final CartService _cartService = CartService();
 
   List<Map<String, dynamic>> cartItems = [];
@@ -22,10 +22,16 @@ class _CartPageState extends State<CartPage> {
     _loadCart();
   }
 
-  Future<void> _loadCart() async {
-    setState(() {
-      isLoading = true;
-    });
+  void refreshCart() {
+    _loadCart(showLoading: false);
+  }
+
+  Future<void> _loadCart({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        isLoading = true;
+      });
+    }
 
     try {
       final items = await _cartService.getCartItems();
@@ -36,9 +42,11 @@ class _CartPageState extends State<CartPage> {
     } catch (e) {
       _showMessage('Gagal memuat cart: $e');
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (showLoading) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -80,7 +88,7 @@ class _CartPageState extends State<CartPage> {
         quantity: newQuantity,
       );
 
-      await _loadCart();
+      await _loadCart(showLoading: false);
     } catch (e) {
       _showMessage('Gagal mengubah jumlah: $e');
     }
@@ -90,7 +98,7 @@ class _CartPageState extends State<CartPage> {
     try {
       await _cartService.removeItem(cartItemId);
 
-      await _loadCart();
+      await _loadCart(showLoading: false);
 
       _showMessage('Produk dihapus dari keranjang');
     } catch (e) {

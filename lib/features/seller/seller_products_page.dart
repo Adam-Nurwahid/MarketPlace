@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/seller_product_service.dart';
 import '../../core/services/store_service.dart';
-import '../../core/widgets/role_guard.dart';
 
 class SellerProductsPage extends StatefulWidget {
   const SellerProductsPage({super.key});
 
   @override
-  State<SellerProductsPage> createState() => _SellerProductsPageState();
+  State<SellerProductsPage> createState() => SellerProductsPageState();
 }
 
-class _SellerProductsPageState extends State<SellerProductsPage> {
+class SellerProductsPageState extends State<SellerProductsPage> {
   final SellerProductService _productService = SellerProductService();
   final StoreService _storeService = StoreService();
 
@@ -26,11 +25,17 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
     _loadProducts();
   }
 
-  Future<void> _loadProducts() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+  void refreshProducts() {
+    _loadProducts(showLoading: false);
+  }
+
+  Future<void> _loadProducts({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final products = await _productService.getMyProducts();
@@ -52,7 +57,6 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
   }
 
   Future<void> _showAddProductDialog() async {
-    // Tampilkan indikator loading saat mengecek toko
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -67,7 +71,7 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
     }
 
     if (!mounted) return;
-    Navigator.pop(context); // Tutup dialog loading
+    Navigator.pop(context);
 
     if (store == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -309,29 +313,22 @@ class _SellerProductsPageState extends State<SellerProductsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
-      requiredRole: 'SELLER',
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Kelola Produk'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _loadOrders,
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _showAddProductDialog,
-          child: const Icon(Icons.add),
-        ),
-        body: _buildBody(),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Kelola Produk'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadProducts,
+          ),
+        ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddProductDialog,
+        child: const Icon(Icons.add),
+      ),
+      body: _buildBody(),
     );
-  }
-
-  void _loadOrders() {
-    _loadProducts();
   }
 
   Widget _buildBody() {

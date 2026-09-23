@@ -197,10 +197,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
       if (!mounted) return;
 
       Navigator.pop(context, paymentResult == true);
-
-      if (!mounted) return;
-
-      Navigator.pop(context, true);
     } catch (e) {
       _showMessage('Checkout gagal: $e');
     } finally {

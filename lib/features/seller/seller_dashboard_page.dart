@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:marketplace/features/seller/seller_orders_page.dart';
-
 import '../../core/services/auth_service.dart';
 import '../../core/services/store_service.dart';
-import '../../core/widgets/role_guard.dart';
 import 'create_store_page.dart';
 import 'seller_products_page.dart';
+import 'seller_orders_page.dart';
 
 class SellerDashboardPage extends StatefulWidget {
   const SellerDashboardPage({super.key});
 
   @override
-  State<SellerDashboardPage> createState() =>
-      _SellerDashboardPageState();
+  State<SellerDashboardPage> createState() => SellerDashboardPageState();
 }
 
-class _SellerDashboardPageState
-    extends State<SellerDashboardPage> {
+class SellerDashboardPageState extends State<SellerDashboardPage> {
   final StoreService _storeService = StoreService();
 
   Map<String, dynamic>? _store;
@@ -30,7 +26,17 @@ class _SellerDashboardPageState
     _loadStore();
   }
 
-  Future<void> _loadStore() async {
+  void refreshStore() {
+    _loadStore(showLoading: false);
+  }
+
+  Future<void> _loadStore({bool showLoading = true}) async {
+    if (showLoading) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
     try {
       final store = await _storeService.getMyStore();
 
@@ -57,26 +63,23 @@ class _SellerDashboardPageState
 
     Navigator.popUntil(
       context,
-          (route) => route.isFirst,
+      (route) => route.isFirst,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
-      requiredRole: 'SELLER',
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Seller Dashboard'),
-          actions: [
-            IconButton(
-              onPressed: _logout,
-              icon: const Icon(Icons.logout),
-            ),
-          ],
-        ),
-        body: _buildBody(),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Ringkasan Toko'),
+        actions: [
+          IconButton(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout),
+          ),
+        ],
       ),
+      body: _buildBody(),
     );
   }
 
@@ -121,7 +124,7 @@ class _SellerDashboardPageState
     final description = _store!['description'] ?? '-';
     final status = _store!['status'] ?? '-';
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,23 +136,17 @@ class _SellerDashboardPageState
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 24),
-
           Text(
             'Nama Toko: $storeName',
             style: const TextStyle(fontSize: 18),
           ),
-
           const SizedBox(height: 12),
-
           Text(
             'Deskripsi: $description',
             style: const TextStyle(fontSize: 16),
           ),
-
           const SizedBox(height: 12),
-
           Text(
             'Status: $status',
             style: const TextStyle(
@@ -157,20 +154,16 @@ class _SellerDashboardPageState
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 24),
-
           if (status == 'PENDING')
             const Text(
               'Toko sedang menunggu persetujuan Admin.',
             ),
-
           if (status == 'REJECTED')
             const Text(
               'Toko ditolak oleh Admin.',
             ),
-
-          if (status == 'APPROVED')
+          if (status == 'APPROVED') ...[
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -182,18 +175,20 @@ class _SellerDashboardPageState
               },
               child: const Text('Kelola Produk'),
             ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SellerOrdersPage(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.shopping_bag),
-            label: const Text('Kelola Pesanan'),
-          ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SellerOrdersPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.shopping_bag),
+              label: const Text('Kelola Pesanan'),
+            ),
+          ],
         ],
       ),
     );
