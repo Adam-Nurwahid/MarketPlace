@@ -90,17 +90,30 @@ class _SellerMainShellState extends State<SellerMainShell> {
 
   Widget _buildMobileLayout(BuildContext context) {
     return Scaffold(
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: _pages,
+      appBar: AppBar(
+        title: const Text(
+          'NACC Seller Center',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-
-
-
-        bottomNavigationBar: Container(
+        actions: [
+          IconButton(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Keluar',
+          ),
+        ],
+      ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
+      bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(
-            top: BorderSide(color: AppColors.border, width: 1),
+            top: BorderSide(
+              color: AppColors.border,
+              width: 1,
+            ),
           ),
         ),
         child: BottomNavigationBar(

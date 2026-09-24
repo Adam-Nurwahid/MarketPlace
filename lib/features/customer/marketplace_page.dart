@@ -13,7 +13,6 @@ class MarketplacePage extends StatefulWidget {
 
 class _MarketplacePageState extends State<MarketplacePage> {
   final ProductService _productService = ProductService();
-
   final TextEditingController _searchController = TextEditingController();
 
   List<Map<String, dynamic>> _allProducts = [];
@@ -24,6 +23,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
   String? _selectedStoreId;
   String _selectedSort = 'default';
+
+  // --- Konfigurasi grid produk ---
+  // maxCrossAxisExtent: lebar MAKSIMAL satu card. Semakin lebar layar (web/tablet),
+  // jumlah kolom akan otomatis bertambah, sehingga card & gambar tidak ikut membesar.
+  static const double _cardMaxWidth = 190;
+  static const double _cardHeight = 258;
+  static const double _productImageHeight = 100;
 
   @override
   void initState() {
@@ -167,14 +173,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            // Ditambahkan SingleChildScrollView & Padding MediaQuery agar tidak overflow saat ada keyboard
             return SafeArea(
               child: SingleChildScrollView(
                 padding: EdgeInsets.only(
-                  left: 20,
-                  top: 20,
-                  right: 20,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                  left: 16,
+                  top: 16,
+                  right: 16,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -186,29 +191,28 @@ class _MarketplacePageState extends State<MarketplacePage> {
                           child: Text(
                             'Filter & Urutkan',
                             style: TextStyle(
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                         IconButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
+                          onPressed: () => Navigator.pop(context),
                           icon: const Icon(Icons.close),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     const Text(
                       'Toko',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     DropdownButtonFormField<String?>(
                       value: temporaryStoreId,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         labelText: 'Pilih toko',
                       ),
                       items: [
@@ -229,16 +233,17 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         });
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     const Text(
                       'Urutkan',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     DropdownButtonFormField<String>(
                       value: temporarySort,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         labelText: 'Urutkan berdasarkan',
                       ),
                       items: const [
@@ -254,7 +259,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         });
                       },
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
                         Expanded(
@@ -337,7 +342,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Marketplace'),
+        title: const Text(
+          'Marketplace',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             onPressed: _loadProducts,
@@ -347,48 +355,61 @@ class _MarketplacePageState extends State<MarketplacePage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           children: [
-            TextField(
-              controller: _searchController,
-              onChanged: (_) {
-                _applyFilters();
-              },
-              decoration: InputDecoration(
-                labelText: 'Cari produk atau toko',
-                hintText: 'Contoh: Sepatu',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isEmpty
-                    ? null
-                    : IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: _clearSearch,
+            // Search Input ringkas & terstandardisasi
+            SizedBox(
+              height: 44,
+              child: TextField(
+                controller: _searchController,
+                onChanged: (_) => _applyFilters(),
+                style: const TextStyle(fontSize: 13),
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  hintText: 'Cari produk atau toko',
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  suffixIcon: _searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
+                    onPressed: _clearSearch,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                border: const OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+            // Button Filter Compact
             SizedBox(
               width: double.infinity,
+              height: 38,
               child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 onPressed: _showFilterBottomSheet,
-                icon: const Icon(Icons.tune),
+                icon: const Icon(Icons.tune, size: 16),
                 label: Text(
                   hasActiveFilter
                       ? 'Filter: ${_getSelectedStoreName()} • ${_getSortLabel()}'
                       : 'Filter & Urutkan',
+                  style: const TextStyle(fontSize: 12),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 '${_products.length} produk ditemukan',
                 style: TextStyle(
                   color: Colors.grey.shade600,
-                  fontSize: 13,
+                  fontSize: 11,
                 ),
               ),
             ),
@@ -403,16 +424,19 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   Widget _buildProductImage(String? imagePath) {
-    return AspectRatio(
-      aspectRatio: 1,
+    // Tinggi gambar TETAP (tidak lagi memakai AspectRatio yang ikut
+    // membesar mengikuti lebar kolom) — supaya ukuran gambar konsisten
+    // baik di layar mobile kecil maupun di web yang lebar.
+    return SizedBox(
+      height: _productImageHeight,
+      width: double.infinity,
       child: Container(
-        width: double.infinity,
         color: Colors.grey.shade100,
         alignment: Alignment.center,
         child: imagePath == null || imagePath.isEmpty
             ? const Icon(
           Icons.shopping_bag_outlined,
-          size: 36,
+          size: 28,
           color: Colors.grey,
         )
             : _buildNetworkImage(imagePath),
@@ -432,23 +456,19 @@ class _MarketplacePageState extends State<MarketplacePage> {
         return const Center(
           child: Icon(
             Icons.broken_image_outlined,
-            size: 36,
+            size: 28,
             color: Colors.grey,
           ),
         );
       },
       loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
-          return child;
-        }
+        if (loadingProgress == null) return child;
 
         return const Center(
           child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-            ),
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
         );
       },
@@ -457,9 +477,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
   Widget _buildProductContent() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage != null) {
@@ -469,6 +487,7 @@ class _MarketplacePageState extends State<MarketplacePage> {
           child: Text(
             'Terjadi kesalahan:\n$_errorMessage',
             textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 13),
           ),
         ),
       );
@@ -479,18 +498,23 @@ class _MarketplacePageState extends State<MarketplacePage> {
         child: Text(
           'Produk tidak ditemukan.',
           textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13),
         ),
       );
     }
 
+    // Grid responsif: lebar card dibatasi (maxCrossAxisExtent), jumlah kolom
+    // otomatis menyesuaikan lebar layar — 2 kolom di HP kecil, lebih banyak
+    // kolom di tablet/web tanpa membuat card & gambar ikut membesar.
+    // Tinggi card (mainAxisExtent) dibuat tetap agar tidak ada sisa ruang
+    // kosong seperti saat memakai childAspectRatio manual sebelumnya.
     return GridView.builder(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 280,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        // PERBAIKAN 1: Mengubah childAspectRatio dari 0.68 ke 0.58 agar Card lebih tinggi & aman dari overflow
-        childAspectRatio: 0.58,
+        maxCrossAxisExtent: _cardMaxWidth,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        mainAxisExtent: _cardHeight,
       ),
       itemCount: _products.length,
       itemBuilder: (context, index) {
@@ -499,60 +523,86 @@ class _MarketplacePageState extends State<MarketplacePage> {
         final storeName = storeData is Map ? storeData['name'] ?? 'Toko' : 'Toko';
 
         return Card(
-          elevation: 2,
+          elevation: 1.5,
+          margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              // mainAxisSize default (max): Column mengisi penuh tinggi card
+              // (mainAxisExtent), lalu Spacer() di bawah menyerap sisa ruang
+              // sehingga tombol tetap menempel rapi di bawah, tanpa blank
+              // space besar seperti sebelumnya.
               children: [
-                _buildProductImage(
-                  product['image_path']?.toString(),
-                ),
-                const SizedBox(height: 8),
+                _buildProductImage(product['image_path']?.toString()),
+                const SizedBox(height: 6),
+
+                // Judul Produk
                 Text(
                   product['name'] ?? 'Produk',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
+
+                // Nama Toko
                 Text(
                   storeName.toString(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.grey.shade600,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
                 const SizedBox(height: 4),
+
+                // Harga Produk
                 Text(
-                  CurrencyFormatter.rupiah(
-                    product['price'],
-                  ),
+                  CurrencyFormatter.rupiah(product['price']),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 13,
+                    color: Colors.black87,
                   ),
                 ),
-                const SizedBox(height: 4),
+
+                // Stok Produk
                 Text(
                   'Stok: ${product['stock']}',
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 10,
+                    color: Colors.grey,
                   ),
                 ),
-                const SizedBox(height: 8),
-                // PERBAIKAN 2: Dibungkus Spacer() agar tombol selalu berada di paling bawah card secara konsisten
+
+                // Menyerap sisa ruang vertikal (jika ada) agar tombol
+                // tetap rapi di bawah, bukan menyisakan blank space.
                 const Spacer(),
+
+                // Tombol Detail/Lihat Produk (Compact & Rapi)
                 SizedBox(
                   width: double.infinity,
+                  height: 32,
                   child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -563,7 +613,10 @@ class _MarketplacePageState extends State<MarketplacePage> {
                         ),
                       );
                     },
-                    child: const Text('Lihat Produk'),
+                    child: const Text(
+                      'Lihat Produk',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],

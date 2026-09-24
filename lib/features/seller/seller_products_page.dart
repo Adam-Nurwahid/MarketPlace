@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/services/seller_product_service.dart';
 import '../../core/services/store_service.dart';
+import '../../core/utils/currency_formatter.dart';
 
 class SellerProductsPage extends StatefulWidget {
   const SellerProductsPage({super.key});
@@ -109,7 +110,8 @@ class SellerProductsPageState extends State<SellerProductsPage> {
     final priceController = TextEditingController(
       text: product == null
           ? ''
-          : _formatRupiah(product['price']),
+          : CurrencyFormatter.rupiah(product['price'])
+          .replaceFirst('Rp ', ''),
     );
 
     final stockController = TextEditingController(
@@ -263,19 +265,7 @@ class SellerProductsPageState extends State<SellerProductsPage> {
                               return;
                             }
 
-                            final formatted =
-                            _formatRupiah(digits);
 
-                            if (formatted != value) {
-                              priceController.value =
-                                  TextEditingValue(
-                                    text: formatted,
-                                    selection:
-                                    TextSelection.collapsed(
-                                      offset: formatted.length,
-                                    ),
-                                  );
-                            }
                           },
                           validator: (value) {
                             final raw =
@@ -507,27 +497,6 @@ class SellerProductsPageState extends State<SellerProductsPage> {
     return _productService.getProductImageUrl(imagePath);
   }
 
-  String _formatRupiah(dynamic value) {
-    final number = int.tryParse(
-      value.toString().replaceAll('.', ''),
-    ) ??
-        0;
-
-    final digits = number.toString();
-
-    final buffer = StringBuffer();
-
-    for (int i = 0; i < digits.length; i++) {
-      if (i > 0 &&
-          (digits.length - i) % 3 == 0) {
-        buffer.write('.');
-      }
-
-      buffer.write(digits[i]);
-    }
-
-    return buffer.toString();
-  }
 
   String _getFriendlyErrorMessage(Object error) {
     final message = error.toString().toLowerCase();
@@ -690,7 +659,7 @@ class SellerProductsPageState extends State<SellerProductsPage> {
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'Harga: Rp ${_formatRupiah(product['price'])}\n'
+                  'Harga: ${CurrencyFormatter.rupiah(product['price'])}\n'
                       'Stok: ${product['stock'] ?? 0}\n'
                       'Status: ${product['status'] ?? '-'}',
                 ),
