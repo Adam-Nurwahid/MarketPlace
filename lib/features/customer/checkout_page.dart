@@ -179,6 +179,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
 
     try {
+      final cartItems = await _cartService.getCartItems();
+
+      final cartSnapshot = cartItems.map((item) {
+        return {
+          'product_id': item['product_id'],
+          'quantity': item['quantity'],
+        };
+      }).toList();
       final orderId = await _cartService.checkout(
         addressId: selectedAddressId!,
       );
@@ -190,6 +198,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         MaterialPageRoute(
           builder: (context) => PaymentPage(
             orderId: orderId,
+            cartItems: cartSnapshot,
           ),
         ),
       );
@@ -219,7 +228,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+        appBar: AppBar(
         title: const Text('Checkout'),
       ),
       body: isLoading

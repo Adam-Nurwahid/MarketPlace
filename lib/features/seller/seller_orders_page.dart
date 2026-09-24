@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/seller_order_service.dart';
 
+import '../../core/utils/currency_formatter.dart';
+
 class SellerOrdersPage extends StatefulWidget {
   const SellerOrdersPage({super.key});
 
@@ -299,11 +301,11 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
                           children: [
                             Expanded(
                               child: Text(
-                                '$productName x$quantity @Rp ${price.toStringAsFixed(0)}',
+                                  '${productName} x$quantity @${CurrencyFormatter.rupiah(price)}',
                               ),
                             ),
                             Text(
-                              'Rp ${subtotal.toStringAsFixed(0)}',
+                                CurrencyFormatter.rupiah(subtotal)
                             ),
                           ],
                         ),
@@ -313,7 +315,7 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
                     const Divider(),
 
                     Text(
-                      'Total Order: Rp ${totalAmount.toStringAsFixed(0)}',
+                   'Total Order: ${CurrencyFormatter.rupiah(totalAmount)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),

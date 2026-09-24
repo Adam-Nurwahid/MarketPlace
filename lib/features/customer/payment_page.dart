@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/payment_service.dart';
-
+import 'package:marketplace/core/services/cart_service.dart';
+import 'package:marketplace/core/services/order_service.dart';
 
 class PaymentPage extends StatefulWidget {
   final String orderId;
+  final List<Map<String, dynamic>> cartItems;
 
   const PaymentPage({
     super.key,
     required this.orderId,
+    required this.cartItems,
   });
 
   @override
@@ -16,8 +19,11 @@ class PaymentPage extends StatefulWidget {
 
 class _PaymentPageState extends State<PaymentPage> {
   final PaymentService _paymentService = PaymentService();
+  final OrderService _orderService = OrderService();
+  final CartService _cartService = CartService();
 
   bool isProcessing = false;
+  bool _isFinalizing = false;
 
   Future<void> _processPayment(bool success) async {
     setState(() {
@@ -78,9 +84,57 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
+  Future<void> _cancelPayment() async {
+    if (_isFinalizing) return;
+
+    setState(() {
+      _isFinalizing = true;
+      isProcessing = true;
+    });
+
+    try {
+      await _orderService.cancelOrder(
+        orderId: widget.orderId,
+      );
+
+      for (final item in widget.cartItems) {
+        await _cartService.addToCart(
+          productId: item['product_id'].toString(),
+          quantity: item['quantity'] as int,
+        );
+      }
+
+      if (!mounted) return;
+
+      Navigator.pop(context, false);
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isFinalizing = false;
+        isProcessing = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Gagal membatalkan pembayaran: $e',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+
+          _cancelPayment();
+        },
+        child: Scaffold(
       appBar: AppBar(
         title: const Text('Simulasi Pembayaran'),
       ),
@@ -137,6 +191,7 @@ class _PaymentPageState extends State<PaymentPage> {
           ],
         ),
       ),
+    )
     );
   }
 }

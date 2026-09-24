@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/admin_order_service.dart';
 
+import '../../core/utils/currency_formatter.dart';
+
 class AdminOrdersPage extends StatefulWidget {
   const AdminOrdersPage({super.key});
 
@@ -56,9 +58,7 @@ class AdminOrdersPageState extends State<AdminOrdersPage> {
   }
 
   String _formatPrice(dynamic value) {
-    final price = (value as num?)?.toDouble() ?? 0;
-
-    return 'Rp ${price.toStringAsFixed(0)}';
+    return CurrencyFormatter.rupiah(value);
   }
 
   Color _statusColor(String status) {

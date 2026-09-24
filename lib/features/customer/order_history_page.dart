@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/order_service.dart';
 
+import '../../core/utils/currency_formatter.dart';
+
 
 class OrderHistoryPage extends StatefulWidget {
   const OrderHistoryPage({super.key});
@@ -42,8 +44,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   }
 
   String _formatPrice(dynamic value) {
-    final price = double.parse(value.toString());
-    return 'Rp ${price.toStringAsFixed(0)}';
+    return CurrencyFormatter.rupiah(value);
   }
 
   Color _statusColor(String status) {

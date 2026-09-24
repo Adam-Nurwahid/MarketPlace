@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/admin_product_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/services/auth_service.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/utils/currency_formatter.dart';
+
 class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key});
 
@@ -57,8 +61,7 @@ class AdminProductsPageState extends State<AdminProductsPage> {
   }
 
   String _formatPrice(dynamic value) {
-    final price = (value as num?)?.toDouble() ?? 0;
-    return 'Rp ${price.toStringAsFixed(0)}';
+    return CurrencyFormatter.rupiah(value);
   }
   String _getProductImageUrl(String imagePath) {
     return Supabase.instance.client.storage
@@ -76,6 +79,27 @@ class AdminProductsPageState extends State<AdminProductsPage> {
           IconButton(
             onPressed: _loadProducts,
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+          ),
+          IconButton(
+            onPressed: () async {
+              try {
+                await AuthService().logout();
+              } catch (e) {
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal logout: $e'),
+                  ),
+                );
+              }
+            },
+            icon: const Icon(
+              Icons.logout,
+              color: AppColors.danger,
+            ),
+            tooltip: 'Keluar',
           ),
         ],
       ),

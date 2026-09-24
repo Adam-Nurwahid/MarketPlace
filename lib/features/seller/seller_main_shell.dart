@@ -95,15 +95,7 @@ class _SellerMainShellState extends State<SellerMainShell> {
           children: _pages,
         ),
 
-        floatingActionButton: FloatingActionButton(
-          onPressed: _logout,
-          backgroundColor: AppColors.danger,
-          tooltip: 'Keluar',
-          child: const Icon(
-            Icons.logout,
-            color: Colors.white,
-          ),
-        ),
+
 
         bottomNavigationBar: Container(
         decoration: const BoxDecoration(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/order_service.dart';
 import 'package:marketplace/core/services/review_service.dart';
 
+import '../../core/utils/currency_formatter.dart';
+
 class CustomerOrdersPage extends StatefulWidget {
   const CustomerOrdersPage({super.key});
 
@@ -223,7 +225,9 @@ class CustomerOrdersPageState extends State<CustomerOrdersPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Expanded(child: Text('$productName x$quantity')),
-                                Text('Rp ${lineTotal.toStringAsFixed(0)}'),
+                                Text(
+                                  CurrencyFormatter.rupiah(lineTotal),
+                                )
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -285,7 +289,7 @@ class CustomerOrdersPageState extends State<CustomerOrdersPage> {
 
                     const Divider(),
                     Text(
-                      'Total: Rp ${total.toStringAsFixed(0)}',
+                      'Total: ${CurrencyFormatter.rupiah(total)}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),

@@ -109,7 +109,7 @@ class CartService {
 
   Future<String> checkout({
     required String addressId,
-    double shippingFee = 10000,
+    double shippingFee = 0,
   }) async {
     final response = await _supabase.rpc(
       'checkout_cart',
