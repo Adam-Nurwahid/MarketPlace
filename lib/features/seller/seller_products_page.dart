@@ -1,4 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/services/seller_product_service.dart';
 import '../../core/services/store_service.dart';
@@ -56,45 +60,64 @@ class SellerProductsPageState extends State<SellerProductsPage> {
     }
   }
 
-  Future<void> _showAddProductDialog() async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
-
-    Map<String, dynamic>? store;
+  Future<Map<String, dynamic>?> _getApprovedStore() async {
     try {
-      store = await _storeService.getMyStore();
+      final store = await _storeService.getMyStore();
+
+      if (store == null) {
+        return null;
+      }
+
+      if (store['status'] != 'APPROVED') {
+        return null;
+      }
+
+      return store;
     } catch (_) {
-      store = null;
+      return null;
     }
+  }
+
+  Future<void> _showProductDialog({
+    Map<String, dynamic>? product,
+  }) async {
+    final isEdit = product != null;
+
+    final store = await _getApprovedStore();
 
     if (!mounted) return;
-    Navigator.pop(context);
 
-    if (store == null) {
+    if (!isEdit && store == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Kamu belum memiliki toko.'),
+          content: Text(
+            'Toko harus sudah disetujui Admin terlebih dahulu.',
+          ),
         ),
       );
       return;
     }
 
-    if (store['status'] != 'APPROVED') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Toko harus disetujui Admin terlebih dahulu.'),
-        ),
-      );
-      return;
-    }
+    final nameController = TextEditingController(
+      text: product?['name']?.toString() ?? '',
+    );
 
-    final nameController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final priceController = TextEditingController();
-    final stockController = TextEditingController();
+    final descriptionController = TextEditingController(
+      text: product?['description']?.toString() ?? '',
+    );
+
+    final priceController = TextEditingController(
+      text: product == null
+          ? ''
+          : _formatRupiah(product['price']),
+    );
+
+    final stockController = TextEditingController(
+      text: product?['stock']?.toString() ?? '',
+    );
+
+    Uint8List? selectedImageBytes;
+    String? selectedImageExtension;
 
     final formKey = GlobalKey<FormState>();
 
@@ -105,79 +128,214 @@ class SellerProductsPageState extends State<SellerProductsPage> {
 
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            Future<void> pickImage() async {
+              final picker = ImagePicker();
+
+              final image = await picker.pickImage(
+                source: ImageSource.gallery,
+                imageQuality: 85,
+                maxWidth: 1200,
+              );
+
+              if (image == null) return;
+
+              final bytes = await image.readAsBytes();
+
+              final extension = image.name.contains('.')
+                  ? image.name.split('.').last.toLowerCase()
+                  : 'jpg';
+
+              setDialogState(() {
+                selectedImageBytes = bytes;
+                selectedImageExtension = extension;
+              });
+            }
+
             return AlertDialog(
-              title: const Text('Tambah Produk'),
+              title: Text(
+                isEdit ? 'Edit Produk' : 'Tambah Produk',
+              ),
               content: Form(
                 key: formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextFormField(
-                        controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nama Produk',
+                child: SizedBox(
+                  width: 500,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // =========================
+                        // IMAGE
+                        // =========================
+                        GestureDetector(
+                          onTap: isSaving ? null : pickImage,
+                          child: Container(
+                            width: double.infinity,
+                            height: 180,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.grey.shade400,
+                              ),
+                              borderRadius:
+                              BorderRadius.circular(12),
+                            ),
+                            child: selectedImageBytes != null
+                                ? ClipRRect(
+                              borderRadius:
+                              BorderRadius.circular(12),
+                              child: Image.memory(
+                                selectedImageBytes!,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                                : _buildExistingImage(product),
+                          ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Nama produk wajib diisi';
-                          }
-                          return null;
-                        },
-                      ),
-                      TextFormField(
-                        controller: descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Deskripsi',
+
+                        const SizedBox(height: 8),
+
+                        TextButton.icon(
+                          onPressed: isSaving ? null : pickImage,
+                          icon: const Icon(Icons.image),
+                          label: Text(
+                            isEdit
+                                ? 'Ganti Gambar'
+                                : 'Pilih Gambar',
+                          ),
                         ),
-                      ),
-                      TextFormField(
-                        controller: priceController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Harga',
+
+                        const SizedBox(height: 8),
+
+                        // =========================
+                        // NAME
+                        // =========================
+                        TextFormField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nama Produk',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null ||
+                                value.trim().isEmpty) {
+                              return 'Nama produk wajib diisi';
+                            }
+
+                            return null;
+                          },
                         ),
-                        validator: (value) {
-                          final price = double.tryParse(value ?? '');
 
-                          if (price == null || price <= 0) {
-                            return 'Harga tidak valid';
-                          }
+                        const SizedBox(height: 12),
 
-                          return null;
-                        },
-                      ),
-                      TextFormField(
-                        controller: stockController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Stok',
+                        // =========================
+                        // DESCRIPTION
+                        // =========================
+                        TextFormField(
+                          controller: descriptionController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Deskripsi',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
-                        validator: (value) {
-                          final stock = int.tryParse(value ?? '');
 
-                          if (stock == null || stock < 0) {
-                            return 'Stok tidak valid';
-                          }
+                        const SizedBox(height: 12),
 
-                          return null;
-                        },
-                      ),
-                    ],
+                        // =========================
+                        // PRICE
+                        // =========================
+                        TextFormField(
+                          controller: priceController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: const InputDecoration(
+                            labelText: 'Harga',
+                            prefixText: 'Rp ',
+                            border: OutlineInputBorder(),
+                            hintText: 'Contoh: 150.000',
+                          ),
+                          onChanged: (value) {
+                            final digits =
+                            value.replaceAll('.', '');
+
+                            if (digits.isEmpty) {
+                              return;
+                            }
+
+                            final formatted =
+                            _formatRupiah(digits);
+
+                            if (formatted != value) {
+                              priceController.value =
+                                  TextEditingValue(
+                                    text: formatted,
+                                    selection:
+                                    TextSelection.collapsed(
+                                      offset: formatted.length,
+                                    ),
+                                  );
+                            }
+                          },
+                          validator: (value) {
+                            final raw =
+                            (value ?? '').replaceAll('.', '');
+
+                            final price =
+                            int.tryParse(raw);
+
+                            if (price == null || price <= 0) {
+                              return 'Harga tidak valid';
+                            }
+
+                            return null;
+                          },
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // =========================
+                        // STOCK
+                        // =========================
+                        TextFormField(
+                          controller: stockController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: const InputDecoration(
+                            labelText: 'Stok',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            final stock =
+                            int.tryParse(value ?? '');
+
+                            if (stock == null || stock < 0) {
+                              return 'Stok tidak valid';
+                            }
+
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed:
-                  isSaving ? null : () => Navigator.pop(dialogContext),
+                  onPressed: isSaving
+                      ? null
+                      : () => Navigator.pop(dialogContext),
                   child: const Text('Batal'),
                 ),
                 ElevatedButton(
                   onPressed: isSaving
                       ? null
                       : () async {
-                    if (!formKey.currentState!.validate()) {
+                    if (!formKey.currentState!
+                        .validate()) {
                       return;
                     }
 
@@ -186,15 +344,60 @@ class SellerProductsPageState extends State<SellerProductsPage> {
                     });
 
                     try {
-                      await _productService.createProduct(
-                        storeId: store!['id'],
-                        name: nameController.text.trim(),
-                        description: descriptionController.text.trim(),
-                        price: double.parse(priceController.text),
-                        stock: int.parse(stockController.text),
+                      final rawPrice =
+                      priceController.text
+                          .replaceAll('.', '');
+
+                      final price =
+                      double.parse(rawPrice);
+
+                      final stock =
+                      int.parse(
+                        stockController.text,
                       );
 
-                      if (!dialogContext.mounted) return;
+                      if (isEdit) {
+                        await _productService
+                            .updateProduct(
+                          productId:
+                          product!['id'].toString(),
+                          name:
+                          nameController.text.trim(),
+                          description:
+                          descriptionController.text
+                              .trim(),
+                          price: price,
+                          stock: stock,
+                          currentImagePath:
+                          product['image_path']
+                              ?.toString(),
+                          newImageBytes:
+                          selectedImageBytes,
+                          newImageExtension:
+                          selectedImageExtension,
+                        );
+                      } else {
+                        await _productService
+                            .createProduct(
+                          storeId:
+                          store!['id'].toString(),
+                          name:
+                          nameController.text.trim(),
+                          description:
+                          descriptionController.text
+                              .trim(),
+                          price: price,
+                          stock: stock,
+                          imageBytes:
+                          selectedImageBytes,
+                          imageExtension:
+                          selectedImageExtension,
+                        );
+                      }
+
+                      if (!dialogContext.mounted) {
+                        return;
+                      }
 
                       Navigator.pop(dialogContext);
 
@@ -202,9 +405,14 @@ class SellerProductsPageState extends State<SellerProductsPage> {
 
                       if (!mounted) return;
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Produk berhasil ditambahkan.'),
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isEdit
+                                ? 'Produk berhasil diperbarui.'
+                                : 'Produk berhasil ditambahkan.',
+                          ),
                         ),
                       );
                     } catch (e) {
@@ -212,11 +420,17 @@ class SellerProductsPageState extends State<SellerProductsPage> {
                         isSaving = false;
                       });
 
-                      if (!dialogContext.mounted) return;
+                      if (!dialogContext.mounted) {
+                        return;
+                      }
 
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      ScaffoldMessenger.of(
+                        dialogContext,
+                      ).showSnackBar(
                         SnackBar(
-                          content: Text(_getFriendlyErrorMessage(e)),
+                          content: Text(
+                            _getFriendlyErrorMessage(e),
+                          ),
                         ),
                       );
                     }
@@ -225,9 +439,13 @@ class SellerProductsPageState extends State<SellerProductsPage> {
                       ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
                   )
-                      : const Text('Simpan'),
+                      : Text(
+                    isEdit ? 'Simpan Perubahan' : 'Simpan',
+                  ),
                 ),
               ],
             );
@@ -242,6 +460,75 @@ class SellerProductsPageState extends State<SellerProductsPage> {
     stockController.dispose();
   }
 
+  Widget _buildExistingImage(
+      Map<String, dynamic>? product,
+      ) {
+    final imagePath = product?['image_path']?.toString();
+
+    if (imagePath == null || imagePath.isEmpty) {
+      return const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.add_photo_alternate_outlined,
+            size: 50,
+          ),
+          SizedBox(height: 8),
+          Text('Pilih gambar produk'),
+        ],
+      );
+    }
+
+    final imageUrl = _productServiceUrl(imagePath);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          return const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.broken_image_outlined,
+                size: 50,
+              ),
+              SizedBox(height: 8),
+              Text('Gambar tidak dapat ditampilkan'),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  String _productServiceUrl(String imagePath) {
+    return _productService.getProductImageUrl(imagePath);
+  }
+
+  String _formatRupiah(dynamic value) {
+    final number = int.tryParse(
+      value.toString().replaceAll('.', ''),
+    ) ??
+        0;
+
+    final digits = number.toString();
+
+    final buffer = StringBuffer();
+
+    for (int i = 0; i < digits.length; i++) {
+      if (i > 0 &&
+          (digits.length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+
+      buffer.write(digits[i]);
+    }
+
+    return buffer.toString();
+  }
+
   String _getFriendlyErrorMessage(Object error) {
     final message = error.toString().toLowerCase();
 
@@ -252,19 +539,23 @@ class SellerProductsPageState extends State<SellerProductsPage> {
     }
 
     if (message.contains('akun mungkin sedang disuspend')) {
-      return 'Produk tidak dapat dihapus karena akun sedang disuspend.';
+      return 'Produk tidak dapat diubah karena akun sedang disuspend.';
     }
 
     return 'Terjadi kesalahan. Silakan coba lagi.';
   }
 
   Future<void> _confirmDeleteProduct(
-      String productId, String productName) async {
+      String productId,
+      String productName,
+      ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Hapus Produk'),
-        content: Text('Apakah Anda yakin ingin menghapus "$productName"?'),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus "$productName"?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -283,7 +574,7 @@ class SellerProductsPageState extends State<SellerProductsPage> {
     );
 
     if (confirm == true) {
-      _deleteProduct(productId);
+      await _deleteProduct(productId);
     }
   }
 
@@ -325,7 +616,7 @@ class SellerProductsPageState extends State<SellerProductsPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddProductDialog,
+        onPressed: () => _showProductDialog(),
         child: const Icon(Icons.add),
       ),
       body: _buildBody(),
@@ -347,7 +638,9 @@ class SellerProductsPageState extends State<SellerProductsPage> {
 
     if (_products.isEmpty) {
       return const Center(
-        child: Text('Belum ada produk. Tekan + untuk menambahkan.'),
+        child: Text(
+          'Belum ada produk. Tekan + untuk menambahkan.',
+        ),
       );
     }
 
@@ -359,29 +652,87 @@ class SellerProductsPageState extends State<SellerProductsPage> {
         itemBuilder: (context, index) {
           final product = _products[index];
 
+          final imagePath =
+          product['image_path']?.toString();
+
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
+              contentPadding: const EdgeInsets.all(12),
+              leading: SizedBox(
+                width: 70,
+                height: 70,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: imagePath != null &&
+                      imagePath.isNotEmpty
+                      ? Image.network(
+                    _productServiceUrl(imagePath),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) {
+                      return const Icon(
+                        Icons.image_not_supported,
+                      );
+                    },
+                  )
+                      : const Icon(
+                    Icons.image_outlined,
+                    size: 40,
+                  ),
+                ),
+              ),
               title: Text(
                 product['name'] ?? '-',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               subtitle: Padding(
-                padding: const EdgeInsets.only(top: 4.0),
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  'Harga: Rp ${product['price'] ?? 0}\n'
+                  'Harga: Rp ${_formatRupiah(product['price'])}\n'
                       'Stok: ${product['stock'] ?? 0}\n'
                       'Status: ${product['status'] ?? '-'}',
                 ),
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () {
-                  _confirmDeleteProduct(
-                    product['id'],
-                    product['name'] ?? 'Produk ini',
-                  );
+              trailing: PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    _showProductDialog(
+                      product: product,
+                    );
+                  } else if (value == 'delete') {
+                    _confirmDeleteProduct(
+                      product['id'].toString(),
+                      product['name'] ?? 'Produk ini',
+                    );
+                  }
                 },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit),
+                        SizedBox(width: 8),
+                        Text('Edit'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.delete,
+                          color: Colors.red,
+                        ),
+                        SizedBox(width: 8),
+                        Text('Hapus'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           );

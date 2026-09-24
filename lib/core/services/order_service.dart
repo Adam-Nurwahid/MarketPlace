@@ -14,28 +14,37 @@ class OrderService {
     final response = await _supabase
         .from('orders')
         .select('''
+        id,
+        shipping_fee,
+        total,
+        status,
+        created_at,
+        recipient_name,
+        phone,
+        shipping_address,
+
+        order_items (
           id,
-          shipping_fee,
-          total,
+          product_id,
+          store_id,
+          product_name,
+          store_name,
+          quantity,
+          price,
+          line_total
+        ),
+
+        order_store_status (
+          store_id,
           status,
-          created_at,
-          recipient_name,
-          phone,
-          shipping_address,
-          order_items (
-            id,
-            product_id,
-            product_name,
-            store_name,
-            quantity,
-            price,
-            line_total
-          ),
-          payments (
-            status,
-            paid_at
-          )
-        ''')
+          updated_at
+        ),
+
+        payments (
+          status,
+          paid_at
+        )
+      ''')
         .eq('user_id', user.id)
         .order('created_at', ascending: false);
 

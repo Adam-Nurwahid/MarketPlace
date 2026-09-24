@@ -5,7 +5,7 @@ import '../../core/widgets/role_guard.dart';
 import 'seller_dashboard_page.dart';
 import 'seller_products_page.dart';
 import 'seller_orders_page.dart';
-
+import 'seller_sales_report_page.dart';
 class SellerMainShell extends StatefulWidget {
   final int initialIndex;
 
@@ -38,6 +38,7 @@ class _SellerMainShellState extends State<SellerMainShell> {
       SellerDashboardPage(key: _storeKey),
       SellerProductsPage(key: _productsKey),
       SellerOrdersPage(key: _ordersKey),
+      const SellerSalesReportPage(),
     ];
   }
 
@@ -135,6 +136,11 @@ class _SellerMainShellState extends State<SellerMainShell> {
               activeIcon: Icon(Icons.assignment),
               label: 'Pesanan',
             ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics_outlined),
+              activeIcon: Icon(Icons.analytics),
+              label: 'Laporan',
+            ),
           ],
         ),
       ),
@@ -191,7 +197,17 @@ class _SellerMainShellState extends State<SellerMainShell> {
                     const SizedBox(width: 8),
                     _buildWebNavItem(1, Icons.inventory_2, 'Produk'),
                     const SizedBox(width: 8),
-                    _buildWebNavItem(2, Icons.assignment, 'Pesanan'),
+                    _buildWebNavItem(
+                      2,
+                      Icons.assignment,
+                      'Pesanan',
+                    ),
+                    const SizedBox(width: 8),
+                    _buildWebNavItem(
+                      3,
+                      Icons.analytics,
+                      'Laporan',
+                    ),
                   ],
                 ),
                 const SizedBox(width: 24),

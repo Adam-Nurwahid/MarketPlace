@@ -24,7 +24,6 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
     _loadOrders(showLoading: false);
   }
 
-  // Mengambil data pesanan seller
   Future<void> _loadOrders({bool showLoading = true}) async {
     if (showLoading) {
       setState(() {
@@ -56,9 +55,9 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
     }
   }
 
-  // Mengubah status sesuai alur yang ditentukan
   Future<void> _updateStatus(
       String orderId,
+      String storeId,
       String currentStatus,
       ) async {
     String? nextStatus;
@@ -84,6 +83,7 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
     try {
       await _orderService.updateOrderStatus(
         orderId: orderId,
+        storeId: storeId,
         newStatus: nextStatus,
       );
 
@@ -91,7 +91,7 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Status diubah menjadi $nextStatus',
+              'Status toko diubah menjadi $nextStatus',
             ),
           ),
         );
@@ -179,7 +179,15 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
             final order = _orders[index];
 
             final orderId = order['id'] as String;
-            final status = order['status'] as String;
+
+            // PENTING:
+            // Sekarang seller menggunakan status milik tokonya.
+            final status =
+                order['seller_status'] as String? ??
+                    order['status'] as String;
+
+            final storeId =
+            order['seller_store_id'] as String;
 
             final totalAmount =
                 (order['total'] as num?)?.toDouble() ?? 0;
@@ -187,10 +195,15 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
             final items =
                 order['order_items'] as List<dynamic>? ?? [];
 
+            final sellerItems = items.where((item) {
+              return item['store_id'] == storeId;
+            }).toList();
+
             final recipientName =
                 order['recipient_name'] ?? '-';
 
-            final phone = order['phone'] ?? '-';
+            final phone =
+                order['phone'] ?? '-';
 
             final shippingAddress =
                 order['shipping_address'] ?? '-';
@@ -200,7 +213,8 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Order: ${orderId.length >= 8 ? orderId.substring(0, 8) : orderId}',
@@ -208,28 +222,54 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(height: 8),
-                    Text(
-                      'Status: $status',
-                      style: TextStyle(
-                        color: _statusColor(status),
-                        fontWeight: FontWeight.bold,
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _statusColor(status)
+                            .withOpacity(0.1),
+                        borderRadius:
+                        BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Status Toko: $status',
+                        style: TextStyle(
+                          color: _statusColor(status),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
+
                     const SizedBox(height: 8),
-                    Text('Customer: $recipientName'),
-                    Text('Telepon: $phone'),
-                    Text('Alamat: $shippingAddress'),
+
+                    Text(
+                      'Customer: $recipientName',
+                    ),
+                    Text(
+                      'Telepon: $phone',
+                    ),
+                    Text(
+                      'Alamat: $shippingAddress',
+                    ),
+
                     const SizedBox(height: 8),
                     const Divider(),
+
                     const Text(
-                      'Produk:',
+                      'Produk Toko:',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(height: 4),
-                    ...items.map((item) {
+
+                    ...sellerItems.map((item) {
                       final productName =
                           item['product_name'] ?? '-';
 
@@ -269,14 +309,18 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
                         ),
                       );
                     }),
+
                     const Divider(),
+
                     Text(
-                      'Total: Rp ${totalAmount.toStringAsFixed(0)}',
+                      'Total Order: Rp ${totalAmount.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(height: 12),
+
                     if (status == 'PENDING' ||
                         status == 'PROCESSING' ||
                         status == 'SHIPPED')
@@ -286,6 +330,7 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
                           onPressed: () {
                             _updateStatus(
                               orderId,
+                              storeId,
                               status,
                             );
                           },
@@ -298,7 +343,7 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
                       const SizedBox(
                         width: double.infinity,
                         child: Text(
-                          'Pesanan telah selesai',
+                          'Pesanan toko telah selesai',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.green,

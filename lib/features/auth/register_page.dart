@@ -20,6 +20,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  String _selectedRole = 'CUSTOMER';
+
   Future<void> _register() async {
     if (_nameController.text.trim().isEmpty ||
         _emailController.text.trim().isEmpty ||
@@ -40,6 +42,7 @@ class _RegisterPageState extends State<RegisterPage> {
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        role: _selectedRole,
       );
 
       if (!mounted) return;
@@ -166,7 +169,35 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
 
                     const SizedBox(height: 24),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedRole,
+                      decoration: InputDecoration(
+                        labelText: 'Daftar sebagai',
+                        prefixIcon: const Icon(Icons.badge_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'CUSTOMER',
+                          child: Text('Customer'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'SELLER',
+                          child: Text('Seller'),
+                        ),
+                      ],
+                      onChanged: _isLoading
+                          ? null
+                          : (value) {
+                        if (value == null) return;
 
+                        setState(() {
+                          _selectedRole = value;
+                        });
+                      },
+                    ),
                     SizedBox(
                       width: double.infinity,
                       height: 52,

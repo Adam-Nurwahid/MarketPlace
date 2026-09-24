@@ -110,6 +110,44 @@ class _MarketplacePageState extends State<MarketplacePage> {
     );
   }
 
+  Widget _buildProductImage(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return const Center(
+        child: Icon(
+          Icons.shopping_bag,
+          size: 64,
+        ),
+      );
+    }
+
+    final imageUrl =
+    _productService.getProductImageUrl(imagePath);
+
+    return Image.network(
+      imageUrl,
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) {
+        return const Center(
+          child: Icon(
+            Icons.broken_image_outlined,
+            size: 64,
+          ),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+  }
+
   Widget _buildProductContent() {
     if (_isLoading) {
       return const Center(
@@ -163,9 +201,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
                   child: Container(
                     width: double.infinity,
                     color: Colors.grey.shade200,
-                    child: const Icon(
-                      Icons.shopping_bag,
-                      size: 64,
+                    child: _buildProductImage(
+                      product['image_path']?.toString(),
                     ),
                   ),
                 ),

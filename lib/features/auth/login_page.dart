@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/features/auth/register_page.dart';
-import 'package:marketplace/features/dashboard/role_dashboard_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/services/auth_service.dart';

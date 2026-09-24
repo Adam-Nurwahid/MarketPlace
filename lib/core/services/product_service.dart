@@ -48,4 +48,10 @@ class ProductService {
           storeName.contains(keyword);
     }).toList();
   }
+
+  String getProductImageUrl(String imagePath) {
+    return _supabase.storage
+        .from('product-images')
+        .getPublicUrl(imagePath);
+  }
 }

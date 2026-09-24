@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/cart_service.dart';
-
+import 'package:supabase_flutter/supabase_flutter.dart';
 class ProductDetailPage extends StatefulWidget {
   final Map<String, dynamic> product;
 
@@ -101,9 +101,8 @@ class _ProductDetailPageState
               height: 250,
               width: double.infinity,
               color: Colors.grey.shade200,
-              child: const Icon(
-                Icons.shopping_bag,
-                size: 100,
+              child: _buildProductImage(
+                product['image_path']?.toString(),
               ),
             ),
 
@@ -207,6 +206,45 @@ class _ProductDetailPageState
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProductImage(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return const Center(
+        child: Icon(
+          Icons.shopping_bag,
+          size: 100,
+        ),
+      );
+    }
+
+    final imageUrl = Supabase.instance.client.storage
+        .from('product-images')
+        .getPublicUrl(imagePath);
+
+    return Image.network(
+      imageUrl,
+      width: double.infinity,
+      height: double.infinity,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) {
+        return const Center(
+          child: Icon(
+            Icons.broken_image_outlined,
+            size: 100,
+          ),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          return child;
+        }
+
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
     );
   }
 }

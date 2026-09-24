@@ -1,11 +1,8 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_page.dart';
-import 'features/auth/register_page.dart';
 import 'features/dashboard/role_dashboard_page.dart';
 
 Future<void> main() async {
@@ -53,14 +50,18 @@ class _AuthGateState extends State<AuthGate> {
     _session = supabase.auth.currentSession;
 
     // Dengarkan setiap perubahan authentication state.
-    _authSubscription =
-        supabase.auth.onAuthStateChange.listen((authState) {
-          if (!mounted) return;
+    _authSubscription = supabase.auth.onAuthStateChange.listen(
+          (authState) {
+        if (!mounted) return;
 
-          setState(() {
-            _session = authState.session;
-          });
+        setState(() {
+          _session = authState.session;
         });
+      },
+      onError: (error, stackTrace) {
+        debugPrint('Auth state error: $error');
+      },
+    );
   }
 
   @override

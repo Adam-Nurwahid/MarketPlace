@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/admin_product_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key});
@@ -59,6 +60,11 @@ class AdminProductsPageState extends State<AdminProductsPage> {
     final price = (value as num?)?.toDouble() ?? 0;
     return 'Rp ${price.toStringAsFixed(0)}';
   }
+  String _getProductImageUrl(String imagePath) {
+    return Supabase.instance.client.storage
+        .from('product-images')
+        .getPublicUrl(imagePath);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,8 +101,8 @@ class AdminProductsPageState extends State<AdminProductsPage> {
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.inventory_2),
+                leading: _buildProductImage(
+                  product['image_path']?.toString(),
                 ),
                 title: Text(
                   product['name'] ?? '-',
@@ -111,6 +117,45 @@ class AdminProductsPageState extends State<AdminProductsPage> {
             );
           },
         ),
+      ),
+    );
+  }
+  Widget _buildProductImage(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return const CircleAvatar(
+        child: Icon(Icons.inventory_2),
+      );
+    }
+
+    final imageUrl = _getProductImageUrl(imagePath);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        imageUrl,
+        width: 60,
+        height: 60,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          return const CircleAvatar(
+            child: Icon(Icons.broken_image_outlined),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            return child;
+          }
+
+          return const SizedBox(
+            width: 60,
+            height: 60,
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

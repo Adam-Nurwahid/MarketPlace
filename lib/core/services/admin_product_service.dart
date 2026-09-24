@@ -11,6 +11,7 @@ class AdminProductService {
           name,
           price,
           stock,
+          image_path,
           store_id,
           stores (
             id,
