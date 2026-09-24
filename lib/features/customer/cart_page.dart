@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:marketplace/core/services/cart_service.dart';
 import 'package:marketplace/features/customer/checkout_page.dart';
 
+import '../../core/utils/currency_formatter.dart';
+
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -114,9 +116,7 @@ class CartPageState extends State<CartPage> {
     );
   }
 
-  String _formatPrice(double price) {
-    return 'Rp ${price.toStringAsFixed(0)}';
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +190,7 @@ class CartPageState extends State<CartPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          _formatPrice(price),
+                          CurrencyFormatter.rupiah(product['price']),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
@@ -246,7 +246,7 @@ class CartPageState extends State<CartPage> {
                         ),
                         const Divider(),
                         Text(
-                          'Subtotal: ${_formatPrice(price * quantity)}',
+                          'Subtotal: ${CurrencyFormatter.rupiah(price * quantity)}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
@@ -278,7 +278,7 @@ class CartPageState extends State<CartPage> {
                   children: [
                     const Text('Total Belanja'),
                     Text(
-                      _formatPrice(subtotal),
+                      CurrencyFormatter.rupiah(subtotal),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,

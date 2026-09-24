@@ -151,6 +151,63 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
     }
   }
 
+  Future<void> _confirmUpdateStatus(
+      String orderId,
+      String storeId,
+      String currentStatus,
+      ) async {
+    String? nextStatus;
+
+    if (currentStatus == 'PENDING') {
+      nextStatus = 'PROCESSING';
+    } else if (currentStatus == 'PROCESSING') {
+      nextStatus = 'SHIPPED';
+    } else if (currentStatus == 'SHIPPED') {
+      nextStatus = 'DELIVERED';
+    }
+
+    if (nextStatus == null) {
+      return;
+    }
+
+    final action = switch (nextStatus) {
+      'PROCESSING' => 'memproses pesanan',
+      'SHIPPED' => 'mengirim pesanan',
+      'DELIVERED' => 'menyelesaikan pesanan',
+      _ => 'mengubah status pesanan',
+    };
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Konfirmasi'),
+        content: Text(
+          'Apakah kamu yakin ingin $action?\n\n'
+              'Status akan berubah dari '
+              '$currentStatus → $nextStatus.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ya, Lanjutkan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    await _updateStatus(
+      orderId,
+      storeId,
+      currentStatus,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -184,12 +241,12 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
 
             // PENTING:
             // Sekarang seller menggunakan status milik tokonya.
-            final status =
-                order['seller_status'] as String? ??
-                    order['status'] as String;
+            final orderStatus = order['status'] as String? ?? 'PENDING';
 
-            final storeId =
-            order['seller_store_id'] as String;
+            final storeStatus =
+                order['seller_status'] as String? ?? orderStatus;
+
+            final storeId = order['seller_store_id'] as String?;
 
             final totalAmount =
                 (order['total'] as num?)?.toDouble() ?? 0;
@@ -227,24 +284,47 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
 
                     const SizedBox(height: 8),
 
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _statusColor(status)
-                            .withOpacity(0.1),
-                        borderRadius:
-                        BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Status Toko: $status',
-                        style: TextStyle(
-                          color: _statusColor(status),
-                          fontWeight: FontWeight.bold,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _statusColor(orderStatus).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Status Pesanan: $orderStatus',
+                            style: TextStyle(
+                              color: _statusColor(orderStatus),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
+
+                        const SizedBox(height: 6),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _statusColor(storeStatus).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Status Toko: $storeStatus',
+                            style: TextStyle(
+                              color: _statusColor(storeStatus),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
                     const SizedBox(height: 8),
@@ -323,25 +403,26 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
 
                     const SizedBox(height: 12),
 
-                    if (status == 'PENDING' ||
-                        status == 'PROCESSING' ||
-                        status == 'SHIPPED')
+                    if (orderStatus != 'CANCELLED' &&
+                        (storeStatus == 'PENDING' ||
+                            storeStatus == 'PROCESSING' ||
+                            storeStatus == 'SHIPPED'))
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            _updateStatus(
+                            _confirmUpdateStatus(
                               orderId,
-                              storeId,
-                              status,
+                              storeId!,
+                              storeStatus,
                             );
                           },
                           child: Text(
-                            _buttonLabel(status),
+                            _buttonLabel(storeStatus),
                           ),
                         ),
                       )
-                    else if (status == 'DELIVERED')
+                    else if (storeStatus == 'DELIVERED')
                       const SizedBox(
                         width: double.infinity,
                         child: Text(
@@ -353,11 +434,11 @@ class SellerOrdersPageState extends State<SellerOrdersPage> {
                           ),
                         ),
                       )
-                    else if (status == 'CANCELLED')
+                    else if (orderStatus == 'CANCELLED')
                         const SizedBox(
                           width: double.infinity,
                           child: Text(
-                            'Pesanan dibatalkan',
+                            'Pesanan dibatalkan oleh customer',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.red,

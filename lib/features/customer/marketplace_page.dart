@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../../core/services/product_service.dart';
+import '../../core/utils/currency_formatter.dart';
 import 'product_detail_page.dart';
+
 class MarketplacePage extends StatefulWidget {
   const MarketplacePage({super.key});
 
   @override
-  State<MarketplacePage> createState() =>
-      _MarketplacePageState();
+  State<MarketplacePage> createState() => _MarketplacePageState();
 }
 
 class _MarketplacePageState extends State<MarketplacePage> {
   final ProductService _productService = ProductService();
 
-  final TextEditingController _searchController =
-  TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
+  List<Map<String, dynamic>> _allProducts = [];
   List<Map<String, dynamic>> _products = [];
 
   bool _isLoading = true;
   String? _errorMessage;
+
+  String? _selectedStoreId;
+  String _selectedSort = 'default';
 
   @override
   void initState() {
@@ -33,25 +37,23 @@ class _MarketplacePageState extends State<MarketplacePage> {
     super.dispose();
   }
 
-  Future<void> _loadProducts({
-    String search = '',
-  }) async {
+  Future<void> _loadProducts() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final products = await _productService.getProducts(
-        search: search,
-      );
+      final products = await _productService.getProducts();
 
       if (!mounted) return;
 
       setState(() {
-        _products = products;
+        _allProducts = products;
         _isLoading = false;
       });
+
+      _applyFilters();
     } catch (e) {
       if (!mounted) return;
 
@@ -62,18 +64,287 @@ class _MarketplacePageState extends State<MarketplacePage> {
     }
   }
 
-  String _formatPrice(dynamic price) {
-    final value = double.tryParse(price.toString()) ?? 0;
+  void _applyFilters() {
+    final keyword = _searchController.text.trim().toLowerCase();
 
-    return 'Rp ${value.toStringAsFixed(0)}';
+    List<Map<String, dynamic>> filtered =
+    List<Map<String, dynamic>>.from(_allProducts);
+
+    if (keyword.isNotEmpty) {
+      filtered = filtered.where((product) {
+        final productName = (product['name'] ?? '').toString().toLowerCase();
+        final storeData = product['stores'];
+        final storeName = storeData is Map
+            ? (storeData['name'] ?? '').toString().toLowerCase()
+            : '';
+
+        return productName.contains(keyword) || storeName.contains(keyword);
+      }).toList();
+    }
+
+    if (_selectedStoreId != null) {
+      filtered = filtered.where((product) {
+        final storeData = product['stores'];
+
+        if (storeData is! Map) {
+          return false;
+        }
+
+        return storeData['id']?.toString() == _selectedStoreId;
+      }).toList();
+    }
+
+    switch (_selectedSort) {
+      case 'price_low':
+        filtered.sort((a, b) {
+          final priceA = double.tryParse(a['price'].toString()) ?? 0;
+          final priceB = double.tryParse(b['price'].toString()) ?? 0;
+          return priceA.compareTo(priceB);
+        });
+        break;
+
+      case 'price_high':
+        filtered.sort((a, b) {
+          final priceA = double.tryParse(a['price'].toString()) ?? 0;
+          final priceB = double.tryParse(b['price'].toString()) ?? 0;
+          return priceB.compareTo(priceA);
+        });
+        break;
+
+      case 'name':
+        filtered.sort((a, b) {
+          final nameA = (a['name'] ?? '').toString().toLowerCase();
+          final nameB = (b['name'] ?? '').toString().toLowerCase();
+          return nameA.compareTo(nameB);
+        });
+        break;
+    }
+
+    setState(() {
+      _products = filtered;
+    });
+  }
+
+  List<Map<String, dynamic>> _getStores() {
+    final Map<String, Map<String, dynamic>> stores = {};
+
+    for (final product in _allProducts) {
+      final storeData = product['stores'];
+
+      if (storeData is Map) {
+        final storeId = storeData['id']?.toString();
+
+        if (storeId != null && storeId.isNotEmpty) {
+          stores[storeId] = {
+            'id': storeId,
+            'name': storeData['name']?.toString() ?? 'Toko',
+          };
+        }
+      }
+    }
+
+    final result = stores.values.toList();
+
+    result.sort(
+          (a, b) => a['name']
+          .toString()
+          .toLowerCase()
+          .compareTo(b['name'].toString().toLowerCase()),
+    );
+
+    return result;
+  }
+
+  void _showFilterBottomSheet() {
+    String? temporaryStoreId = _selectedStoreId;
+    String temporarySort = _selectedSort;
+
+    final stores = _getStores();
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            // Ditambahkan SingleChildScrollView & Padding MediaQuery agar tidak overflow saat ada keyboard
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  top: 20,
+                  right: 20,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Filter & Urutkan',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Toko',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String?>(
+                      value: temporaryStoreId,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Pilih toko',
+                      ),
+                      items: [
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('Semua Toko'),
+                        ),
+                        ...stores.map((store) {
+                          return DropdownMenuItem<String?>(
+                            value: store['id'].toString(),
+                            child: Text(store['name'].toString()),
+                          );
+                        }),
+                      ],
+                      onChanged: (value) {
+                        setSheetState(() {
+                          temporaryStoreId = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Urutkan',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: temporarySort,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Urutkan berdasarkan',
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'default', child: Text('Default')),
+                        DropdownMenuItem(value: 'price_low', child: Text('Harga terendah')),
+                        DropdownMenuItem(value: 'price_high', child: Text('Harga tertinggi')),
+                        DropdownMenuItem(value: 'name', child: Text('Nama A-Z')),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setSheetState(() {
+                          temporarySort = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              setSheetState(() {
+                                temporaryStoreId = null;
+                                temporarySort = 'default';
+                              });
+                            },
+                            child: const Text('Reset'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedStoreId = temporaryStoreId;
+                                _selectedSort = temporarySort;
+                              });
+
+                              Navigator.pop(context);
+                              _applyFilters();
+                            },
+                            child: const Text('Terapkan'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _getSelectedStoreName() {
+    if (_selectedStoreId == null) {
+      return 'Semua Toko';
+    }
+
+    final stores = _getStores();
+
+    for (final store in stores) {
+      if (store['id'].toString() == _selectedStoreId) {
+        return store['name'].toString();
+      }
+    }
+
+    return 'Semua Toko';
+  }
+
+  String _getSortLabel() {
+    switch (_selectedSort) {
+      case 'price_low':
+        return 'Harga terendah';
+      case 'price_high':
+        return 'Harga tertinggi';
+      case 'name':
+        return 'Nama A-Z';
+      default:
+        return 'Default';
+    }
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _applyFilters();
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasActiveFilter =
+        _selectedStoreId != null || _selectedSort != 'default';
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Marketplace'),
+        actions: [
+          IconButton(
+            onPressed: _loadProducts,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -81,26 +352,47 @@ class _MarketplacePageState extends State<MarketplacePage> {
           children: [
             TextField(
               controller: _searchController,
+              onChanged: (_) {
+                _applyFilters();
+              },
               decoration: InputDecoration(
                 labelText: 'Cari produk atau toko',
                 hintText: 'Contoh: Sepatu',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
+                suffixIcon: _searchController.text.isEmpty
+                    ? null
+                    : IconButton(
                   icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    _loadProducts();
-                  },
+                  onPressed: _clearSearch,
                 ),
                 border: const OutlineInputBorder(),
               ),
-              onSubmitted: (value) {
-                _loadProducts(search: value);
-              },
             ),
-
-            const SizedBox(height: 16),
-
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _showFilterBottomSheet,
+                icon: const Icon(Icons.tune),
+                label: Text(
+                  hasActiveFilter
+                      ? 'Filter: ${_getSelectedStoreName()} • ${_getSortLabel()}'
+                      : 'Filter & Urutkan',
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${_products.length} produk ditemukan',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
             Expanded(
               child: _buildProductContent(),
             ),
@@ -111,17 +403,25 @@ class _MarketplacePageState extends State<MarketplacePage> {
   }
 
   Widget _buildProductImage(String? imagePath) {
-    if (imagePath == null || imagePath.isEmpty) {
-      return const Center(
-        child: Icon(
-          Icons.shopping_bag,
-          size: 64,
-        ),
-      );
-    }
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Container(
+        width: double.infinity,
+        color: Colors.grey.shade100,
+        alignment: Alignment.center,
+        child: imagePath == null || imagePath.isEmpty
+            ? const Icon(
+          Icons.shopping_bag_outlined,
+          size: 36,
+          color: Colors.grey,
+        )
+            : _buildNetworkImage(imagePath),
+      ),
+    );
+  }
 
-    final imageUrl =
-    _productService.getProductImageUrl(imagePath);
+  Widget _buildNetworkImage(String imagePath) {
+    final imageUrl = _productService.getProductImageUrl(imagePath);
 
     return Image.network(
       imageUrl,
@@ -132,7 +432,8 @@ class _MarketplacePageState extends State<MarketplacePage> {
         return const Center(
           child: Icon(
             Icons.broken_image_outlined,
-            size: 64,
+            size: 36,
+            color: Colors.grey,
           ),
         );
       },
@@ -142,7 +443,13 @@ class _MarketplacePageState extends State<MarketplacePage> {
         }
 
         return const Center(
-          child: CircularProgressIndicator(),
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+            ),
+          ),
         );
       },
     );
@@ -157,58 +464,52 @@ class _MarketplacePageState extends State<MarketplacePage> {
 
     if (_errorMessage != null) {
       return Center(
-        child: Text(
-          'Terjadi kesalahan:\n$_errorMessage',
-          textAlign: TextAlign.center,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Terjadi kesalahan:\n$_errorMessage',
+            textAlign: TextAlign.center,
+          ),
         ),
       );
     }
 
     if (_products.isEmpty) {
       return const Center(
-        child: Text('Belum ada produk tersedia.'),
+        child: Text(
+          'Produk tidak ditemukan.',
+          textAlign: TextAlign.center,
+        ),
       );
     }
 
     return GridView.builder(
-      gridDelegate:
-      const SliverGridDelegateWithMaxCrossAxisExtent(
+      padding: const EdgeInsets.only(bottom: 16),
+      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 280,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.75,
+        // PERBAIKAN 1: Mengubah childAspectRatio dari 0.68 ke 0.58 agar Card lebih tinggi & aman dari overflow
+        childAspectRatio: 0.58,
       ),
       itemCount: _products.length,
       itemBuilder: (context, index) {
         final product = _products[index];
-
         final storeData = product['stores'];
-
-        final storeName = storeData is Map
-            ? storeData['name'] ?? 'Toko'
-            : 'Toko';
+        final storeName = storeData is Map ? storeData['name'] ?? 'Toko' : 'Toko';
 
         return Card(
           elevation: 2,
           clipBehavior: Clip.antiAlias,
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    color: Colors.grey.shade200,
-                    child: _buildProductImage(
-                      product['image_path']?.toString(),
-                    ),
-                  ),
+                _buildProductImage(
+                  product['image_path']?.toString(),
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   product['name'] ?? 'Produk',
                   maxLines: 2,
@@ -217,36 +518,38 @@ class _MarketplacePageState extends State<MarketplacePage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   storeName.toString(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.grey.shade600,
                     fontSize: 12,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
-                  _formatPrice(product['price']),
+                  CurrencyFormatter.rupiah(
+                    product['price'],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   'Stok: ${product['stock']}',
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(
+                    fontSize: 12,
+                  ),
                 ),
-
                 const SizedBox(height: 8),
-
+                // PERBAIKAN 2: Dibungkus Spacer() agar tombol selalu berada di paling bawah card secara konsisten
+                const Spacer(),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

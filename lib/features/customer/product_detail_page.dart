@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/cart_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../core/utils/currency_formatter.dart';
 class ProductDetailPage extends StatefulWidget {
   final Map<String, dynamic> product;
 
@@ -22,11 +24,7 @@ class _ProductDetailPageState
   int _quantity = 1;
   bool _isLoading = false;
 
-  String _formatPrice(dynamic price) {
-    final value = double.tryParse(price.toString()) ?? 0;
 
-    return 'Rp ${value.toStringAsFixed(0)}';
-  }
 
   Future<void> _addToCart() async {
     final productId = widget.product['id'].toString();
@@ -119,7 +117,7 @@ class _ProductDetailPageState
             const SizedBox(height: 12),
 
             Text(
-              _formatPrice(price),
+              CurrencyFormatter.rupiah(product['price']),
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
