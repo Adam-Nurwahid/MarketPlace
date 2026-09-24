@@ -16,12 +16,15 @@ class CustomerDashboardPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await AuthService().logout();
+              try {
+                await AuthService().logout();
+              } catch (e) {
+                if (!context.mounted) return;
 
-              if (context.mounted) {
-                Navigator.popUntil(
-                  context,
-                  (route) => route.isFirst,
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal logout: $e'),
+                  ),
                 );
               }
             },
@@ -97,12 +100,15 @@ class CustomerDashboardPage extends StatelessWidget {
                       ),
                     ),
                     onTap: () async {
-                      await AuthService().logout();
+                      try {
+                        await AuthService().logout();
+                      } catch (e) {
+                        if (!context.mounted) return;
 
-                      if (context.mounted) {
-                        Navigator.popUntil(
-                          context,
-                          (route) => route.isFirst,
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Gagal logout: $e'),
+                          ),
                         );
                       }
                     },

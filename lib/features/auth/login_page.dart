@@ -34,15 +34,6 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const RoleDashboardPage(),
-        ),
-      );
     } on AuthException catch (e) {
       _showMessage(e.message);
     } catch (e) {

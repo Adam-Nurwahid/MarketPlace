@@ -62,14 +62,17 @@ class _AdminMainShellState extends State<AdminMainShell> {
   }
 
   Future<void> _logout() async {
-    await AuthService().logout();
+    try {
+      await AuthService().logout();
+    } catch (e) {
+      if (!mounted) return;
 
-    if (!mounted) return;
-
-    Navigator.popUntil(
-      context,
-      (route) => route.isFirst,
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal logout: $e'),
+        ),
+      );
+    }
   }
 
   @override

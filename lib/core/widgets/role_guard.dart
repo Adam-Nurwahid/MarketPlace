@@ -31,6 +31,13 @@ class _RoleGuardState extends State<RoleGuard> {
       final user = supabase.auth.currentUser;
 
       if (user == null) {
+        if (!mounted) return;
+
+        setState(() {
+          _hasAccess = false;
+          _isLoading = false;
+        });
+
         return;
       }
 
