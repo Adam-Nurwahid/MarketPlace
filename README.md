@@ -2,6 +2,11 @@
 
 Aplikasi marketplace multi-seller berbasis web. Customer bisa mencari dan membeli produk dari beberapa toko sekaligus, seller mengelola toko dan pesanan, dan admin mengelola seluruh platform. Dibangun dengan **Flutter Web** untuk frontend dan **Supabase** (Auth, PostgreSQL, Storage, RPC) untuk backend. Pembayaran berupa simulasi.
 
+🔗 **Live demo:** [marketplace-af273.web.app](https://marketplace-af273.web.app)
+📦 **Repository:** [github.com/Adam-Nurwahid/MarketPlace](https://github.com/Adam-Nurwahid/MarketPlace)
+
+---
+
 ## Daftar Isi
 
 1. [Tech Stack](#1-tech-stack)
@@ -9,12 +14,13 @@ Aplikasi marketplace multi-seller berbasis web. Customer bisa mencari dan membel
 3. [Struktur Folder](#3-struktur-folder)
 4. [Fitur per Role](#4-fitur-per-role)
 5. [Alur Utama](#5-alur-utama)
-6. [Skema Database](#6-skema-database)
-7. [Fungsi RPC](#7-fungsi-rpc)
-8. [Keamanan & Hak Akses](#8-keamanan--hak-akses)
-9. [Cara Menjalankan](#9-cara-menjalankan)
-10. [Deployment](#10-deployment)
-11. [Catatan Pengembangan](#11-catatan-pengembangan)
+6. [Petunjuk Penggunaan](#6-petunjuk-penggunaan)
+7. [Skema Database](#7-skema-database)
+8. [Fungsi RPC](#8-fungsi-rpc)
+9. [Keamanan & Hak Akses](#9-keamanan--hak-akses)
+10. [Cara Menjalankan](#10-cara-menjalankan)
+11. [Deployment](#11-deployment)
+12. [Catatan Pengembangan](#12-catatan-pengembangan)
 
 ---
 
@@ -140,7 +146,39 @@ Seller register ─► buat toko (PENDING) ─► Admin approve/reject
 Admin suspend seller ─► akun seller ditandai suspended
 ```
 
-## 6. Skema Database
+## 6. Petunjuk Penggunaan
+
+Aplikasi sudah live di **https://marketplace-af273.web.app** — buka langsung dengan Google Chrome versi terbaru, tanpa instalasi apa pun.
+
+### 6.1 Sebagai Customer
+
+1. Buka link aplikasi, klik **Register**, isi nama/email/password, pilih role **Customer**, lalu login.
+2. Jelajahi halaman **Marketplace** — cari produk lewat kolom pencarian (berdasarkan nama produk atau nama toko), atau scroll daftar produk.
+3. Buka detail produk, atur jumlah sesuai stok, lalu **Tambah ke Keranjang**.
+4. Buka **Keranjang** → **Checkout** → pilih/tambah alamat pengiriman.
+5. Di halaman **Simulasi Pembayaran**, pilih *Berhasil* atau *Gagal*.
+6. Pantau status pesanan di menu **Pesanan** (status ditampilkan per toko jika beli dari beberapa seller).
+7. Selama status `PENDING`/`PROCESSING`, pesanan bisa dibatalkan lewat tombol **Batalkan**.
+8. Setelah status `DELIVERED`, beri **Review** (rating 1–5 + komentar) pada produk.
+
+### 6.2 Sebagai Seller
+
+1. Register dengan role **Seller**, lalu lengkapi formulir **buat toko** (nama + deskripsi).
+2. Toko berstatus `PENDING` sampai disetujui admin — tunggu approval sebelum mulai berjualan.
+3. Setelah disetujui, buka **Toko Saya → Produk** untuk menambah produk (nama, deskripsi, harga, stok, foto, status).
+4. Cek pesanan masuk di menu **Pesanan** (hanya menampilkan item dari toko sendiri).
+5. Update status pengiriman berurutan: `PENDING → PROCESSING → SHIPPED → DELIVERED`.
+6. Pantau performa toko di menu **Laporan** (total penjualan, order selesai, produk terjual, produk terlaris).
+
+### 6.3 Sebagai Admin
+
+1. Login dengan akun admin.
+2. Buka **Persetujuan Toko** untuk approve/reject toko berstatus `PENDING`.
+3. Buka **Pengguna** untuk melihat daftar customer & seller; suspend/aktifkan seller bila perlu.
+4. Buka **Produk** untuk mengelola produk lintas toko.
+5. Buka **Transaksi** untuk memantau seluruh transaksi di platform.
+
+## 7. Skema Database
 
 Skema ini disusun dari query yang dipakai di kode aplikasi.
 
@@ -170,7 +208,7 @@ Nilai status:
 | Produk | `ACTIVE` tampil di marketplace |
 | Toko | `PENDING` menunggu approval, lalu approved / rejected |
 
-## 7. Fungsi RPC
+## 8. Fungsi RPC
 
 | RPC | Parameter | Fungsi |
 |---|---|---|
@@ -181,7 +219,7 @@ Nilai status:
 | `create_product_review` | `p_order_id`, `p_product_id`, `p_rating`, `p_comment` | Menyimpan review |
 | `admin_toggle_seller_suspension` | `p_seller_id`, `p_is_suspended` | Suspend / aktifkan seller |
 
-## 8. Keamanan & Hak Akses
+## 9. Keamanan & Hak Akses
 
 - **Autentikasi**: JWT dari Supabase Auth. Permintaan tanpa token ditolak oleh Supabase pada tabel yang dilindungi.
 - **Otorisasi di client**: `RoleGuard` membatasi halaman berdasarkan role dan status akun.
@@ -189,7 +227,7 @@ Nilai status:
 - **Validasi stok**: quantity dibatasi di UI dan divalidasi saat checkout.
 - **Seller ter-suspend** dan akun non-`ACTIVE` ditolak oleh `RoleGuard`.
 
-## 9. Cara Menjalankan
+## 10. Cara Menjalankan
 
 **Prasyarat:** Flutter SDK (Dart `^3.12.0`), project Supabase yang sudah berisi tabel, RPC, dan bucket `product-images`, serta Chrome.
 
@@ -206,13 +244,13 @@ flutter run -d chrome \
 **Setup Supabase**
 
 1. Buat project, lalu salin Project URL dan anon key (Settings → API).
-2. Buat tabel sesuai [Skema Database](#6-skema-database) dan function sesuai [RPC](#7-fungsi-rpc).
+2. Buat tabel sesuai [Skema Database](#7-skema-database) dan function sesuai [RPC](#8-fungsi-rpc).
 3. Buat trigger yang mengisi `profiles` saat user mendaftar (membaca `name` dan `role` dari `raw_user_meta_data`).
 4. Buat bucket Storage `product-images` (public).
 5. Aktifkan RLS dan policy per tabel.
 6. Isi data awal (akun dan produk) sesuai kebutuhan.
 
-## 10. Deployment
+## 11. Deployment
 
 ```bash
 flutter build web \
@@ -224,7 +262,9 @@ firebase deploy --only hosting
 
 `firebase.json` melayani `build/web` dan me-rewrite semua route ke `/index.html`.
 
-## 11. Catatan Pengembangan
+Aplikasi hasil deploy saat ini dapat diakses di: **https://marketplace-af273.web.app**
+
+## 12. Catatan Pengembangan
 
 - Simulasi pembayaran dan ongkir sederhana dipakai agar tidak bergantung pada integrasi pihak ketiga.
 - Pencarian saat ini berbasis keyword dan diproses di sisi client; filter kategori, rentang harga, dan sorting bisa ditambahkan.
