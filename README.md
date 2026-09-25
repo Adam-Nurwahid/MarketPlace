@@ -21,6 +21,7 @@ Aplikasi marketplace multi-seller berbasis web. Customer bisa mencari dan membel
 10. [Cara Menjalankan](#10-cara-menjalankan)
 11. [Deployment](#11-deployment)
 12. [Catatan Pengembangan](#12-catatan-pengembangan)
+13. [Spesifikasi Perangkat Android](#13-spesifikasi-perangkat-android)
 
 ---
 
@@ -271,3 +272,27 @@ Aplikasi hasil deploy saat ini dapat diakses di: **https://marketplace-af273.web
 - Dashboard admin berupa menu manajemen; ringkasan statistik bisa ditambahkan.
 - Schema SQL, RPC, dan policy RLS sebaiknya disimpan di `supabase/migrations/` agar backend mudah direproduksi.
 - `test/widget_test.dart` masih template bawaan Flutter dan perlu diganti dengan test yang relevan.
+
+## 13. Spesifikasi Perangkat Android
+
+Karena UI dibangun responsif (navigasi atas untuk layar lebar, bottom navigation untuk layar kecil), aplikasi ini tetap bisa diakses dari smartphone/tablet Android lewat browser di link demo — **tanpa perlu install APK**. Rekomendasi spesifikasi minimum:
+
+| Komponen | Minimum | Rekomendasi |
+|---|---|---|
+| Versi Android (OS) | 8.0 Oreo (API 26) | 10.0 ke atas |
+| Browser | Chrome for Android versi terbaru, atau browser berbasis Chromium (Edge, Brave, Samsung Internet) | Chrome for Android versi terbaru |
+| RAM | 2 GB | 4 GB atau lebih |
+| Ruang penyimpanan kosong | ± 100 MB (untuk cache browser & aset gambar) | - |
+| Koneksi internet | Wajib — minimal 3G/4G stabil | Wi-Fi atau 4G/5G |
+| Ukuran layar | Mendukung mulai layar ponsel kecil (≥ 4.7") berkat layout responsif | - |
+
+**Catatan:**
+- Semua fitur (login, katalog produk, checkout, upload gambar) memanggil Supabase secara langsung, sehingga aplikasi **tidak bisa dipakai offline**.
+- Folder `android/` di repo ini adalah hasil default `flutter create` (belum dikustomisasi khusus, `minSdk`/`targetSdk` mengikuti default Flutter SDK yang terpasang) — repo ini belum menyediakan build APK/App Bundle siap pakai.
+- Jika ingin membangun dan menjalankan sebagai aplikasi Android native (bukan lewat browser), gunakan perangkat/emulator dengan Android sesuai `minSdk` di atas, lalu jalankan:
+  ```bash
+  flutter build apk \
+    --dart-define=SUPABASE_URL=https://<project-ref>.supabase.co \
+    --dart-define=SUPABASE_ANON_KEY=<anon-key>
+  ```
+- Spesifikasi di atas merupakan estimasi berdasarkan kebutuhan render Flutter Web di browser mobile dan koneksi API, bukan hasil pengujian resmi di device lab.
